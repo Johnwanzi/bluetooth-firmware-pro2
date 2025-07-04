@@ -10,9 +10,18 @@ The firmware is based on NRF5 SDK 16.0.0, and build with CMake
 # make sure you have cmake, Python 3, and aarm-none-eabi toolchain available in PATH
 
 # export your OWN key for firmware signing
+# export BT_SIG_PK=$(cat <<EOF
+# -----BEGIN EC PRIVATE KEY-----
+# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# -----END EC PRIVATE KEY-----
+# EOF
+# )
+
 export BT_SIG_PK=$(cat <<EOF
 -----BEGIN EC PRIVATE KEY-----
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+MHcCAQEEIBJ+8ZbTjTxxx0FrHnzFj2qmPfmkjJ7Q6mAeXHBL9pEloAoGCCqGSM49
+AwEHoUQDQgAECk0nFTFnXBnKPRNRYmKvQZa0gEPWKJUJZl6YPmtGt3rWiJHdJxUt
+gYYNLB+cZgOYJFQNIjJQwPQfgcgJz3uUMQ==
 -----END EC PRIVATE KEY-----
 EOF
 )

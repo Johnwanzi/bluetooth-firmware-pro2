@@ -2459,6 +2459,7 @@ int main(void)
     // ==> NRF Crypto API
     nrf_crypto_init();
     // ==> Power Manage IC, LED Driver, and Device Configs
+    #if 0
     CRITICAL_REGION_ENTER();
     // pmu init
     EXEC_RETRY(
@@ -2497,6 +2498,7 @@ int main(void)
         }
     );
     CRITICAL_REGION_EXIT();
+    #endif
 
     // ###############################
     // DFU Update
@@ -2515,16 +2517,16 @@ int main(void)
     usr_spim_init();
     timers_init();
     scheduler_init();
-    watch_dog_init();
+    //watch_dog_init();
 
     // ###############################
     // Power Manage Init Items
     NRF_LOG_INFO("Power Config Seq.");
     NRF_LOG_FLUSH();
     // ST power on
-    pmu_p->SetState(PWR_STATE_ON);
+    //pmu_p->SetState(PWR_STATE_ON);
     // make sure light is off
-    set_led_brightness(0);
+    //set_led_brightness(0);
 
     // ###############################
     // Bluetooth Init Items
@@ -2540,15 +2542,17 @@ int main(void)
     services_init();
     advertising_init();
     conn_params_init();
-    bt_advertising_ctrl(
-        ((deviceConfig_p->settings.flag_initialized == DEVICE_CONFIG_FLAG_MAGIC) && // valid
-         (deviceConfig_p->settings.bt_ctrl != DEVICE_CONFIG_FLAG_MAGIC))            // set to flag means turn off
-        ,
-        false
-    ); // TODO: check return!
+    // bt_advertising_ctrl(
+    //     ((deviceConfig_p->settings.flag_initialized == DEVICE_CONFIG_FLAG_MAGIC) && // valid
+    //      (deviceConfig_p->settings.bt_ctrl != DEVICE_CONFIG_FLAG_MAGIC))            // set to flag means turn off
+    //     ,
+    //     false
+    // ); // TODO: check return!
+    bt_advertising_ctrl(true, false);
 
     // ###############################
     // Power mode and warning (depends on SD, has to be here)
+    #if 0
     ExecuteCheck_ADV(sd_power_dcdc_mode_set(NRF_POWER_DCDC_ENABLE), NRF_SUCCESS, {
         NRF_LOG_INFO("NRF Power enable DCDC failed");
         NRF_LOG_FLUSH();
@@ -2564,6 +2568,7 @@ int main(void)
         NRF_LOG_FLUSH();
         enter_low_power_mode();
     });
+    #endif
     NRF_LOG_INFO("NRF Power configured");
 
     // ###############################
@@ -2573,15 +2578,15 @@ int main(void)
     application_timers_start();
     for ( ;; )
     {
-        pmu_sys_voltage_monitor(NULL, 0);
-        pmu_pwrok_pull(NULL, 0);
-        pmu_irq_pull(NULL, 0);
-        pmu_status_refresh(NULL, 0);
-        pmu_req_process(NULL, 0);
+        // pmu_sys_voltage_monitor(NULL, 0);
+        // pmu_pwrok_pull(NULL, 0);
+        // pmu_irq_pull(NULL, 0);
+        // pmu_status_refresh(NULL, 0);
+        // pmu_req_process(NULL, 0);
         ble_ctl_process(NULL, 0);
         rsp_st_uart_cmd(NULL, 0);
         manage_bat_level(NULL, 0);
-        led_ctl_process(NULL, 0);
+        // led_ctl_process(NULL, 0);
         bat_msg_report_process(NULL, 0);
         // event exec
         app_sched_execute();
