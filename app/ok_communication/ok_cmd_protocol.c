@@ -14,6 +14,10 @@
 #include "ok_flashled.h"
 #include "ok_communication.h"
 
+#ifndef BUILD_ID
+#define BUILD_ID "unknown"
+#endif
+
 #define OK_CMD_TYPE_NO_PAYLOAD   0x01
 #define OK_CMD_TYPE_WITH_PAYLOAD 0x02
 
@@ -148,7 +152,7 @@ static void ok_cmd_uplink_ble_info_handler(void *data, uint16_t length)
 {
     uint8_t sub_cmd      = 0;
     uint8_t rsp_len      = 0;
-    uint8_t bak_buff[36] = {0};
+    uint8_t bak_buff[48] = {0};
 
     if (data == NULL || length == 0) {
         return;

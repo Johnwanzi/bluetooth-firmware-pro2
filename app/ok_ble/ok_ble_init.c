@@ -312,7 +312,12 @@ uint16_t ok_ble_conn_handle_get(void)
 
 void ok_ble_gap_local_disconnect(void)
 {
-    ret_code_t err_code;
+    // ble not connect, just return
+    if (m_conn_handle == BLE_CONN_HANDLE_INVALID) {
+        return;
+    }
+
+    ret_code_t err_code = NRF_SUCCESS;
     err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_LOCAL_HOST_TERMINATED_CONNECTION);
     APP_ERROR_CHECK(err_code);
 }

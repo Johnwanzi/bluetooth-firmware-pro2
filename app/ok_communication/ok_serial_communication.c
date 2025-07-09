@@ -78,10 +78,11 @@ static void uart_event_handle(app_uart_evt_t *p_event)
         } else if (FRAME_LEN_H == index) {
             lenth = ((uint32_t)uart_data_array[2] << 8) + uart_data_array[3];
         } else if (index >= lenth + 4) {
+            index = 0;
+
             uart_xor_byte = calcXor(uart_data_array, index - 1);
             if (uart_xor_byte != uart_data_array[index - 1]) {
-                index = 0;
-                return;
+                //return;
             }
 
             ok_cmd_parse(&uart_data_array[4], lenth - 1); /* remove xor byte */
