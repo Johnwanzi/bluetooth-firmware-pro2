@@ -337,7 +337,7 @@ uint32_t ble_fido_init(ble_fido_t * p_fido, ble_fido_init_t const * p_fido_init)
 	add_char_params.uuid_type         = p_fido->uuid_type;
     add_char_params.max_len           = 1;
 	add_char_params.init_len          = 1;
-	add_char_params.p_init_value      = service_revision_bitfield;
+	add_char_params.p_init_value      = &service_revision_bitfield;
 	add_char_params.is_var_len        = false;
     add_char_params.char_props.read   = 1;
     add_char_params.char_props.write  = 1;

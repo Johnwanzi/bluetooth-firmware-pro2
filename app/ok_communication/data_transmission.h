@@ -28,9 +28,9 @@ void usr_spim_init(void);
 
 void spi_cs_set(bool pinState);
 
-void usr_spi_write(uint8_t* p_buffer, uint32_t size);
+void usr_spi_write(uint8_t *p_buffer, uint32_t size);
 
-bool usr_spi_read(uint8_t* p_buffer, uint32_t size);
+bool usr_spi_read(uint8_t *p_buffer, uint32_t size);
 
 void usr_spi_enable(void);
 
@@ -38,9 +38,9 @@ void usr_spi_disable(void);
 
 #define DATA_RECV_BUF_SIZE (3 * 1024)
 
-int twi_master_init(void);
-void spi_write_st_data(void* data, uint16_t len);
-void spi_read_st_data(void* data, uint16_t len);
+int  twi_master_init(void);
+void spi_write_st_data(void *data, uint16_t len);
+void spi_read_st_data(void *data, uint16_t len);
 void spi_state_reset(void);
 void spi_state_update(void);
 #endif

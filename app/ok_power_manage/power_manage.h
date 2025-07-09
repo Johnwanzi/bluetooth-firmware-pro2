@@ -33,9 +33,9 @@
 #define BLE_CMD_POWER_ERR__CHARGE_TIMEOUT    0x05
 
 // pmu handle
-extern PMU_t* pmu_p;
+PMU_t *power_manage_ctx_get(void);
 
-void set_send_stm_data_p(void (*send_stm_data_p_)(uint8_t* pdata, uint8_t lenth));
+void set_send_stm_data_p(void (*send_stm_data_p_)(void *pdata, uint16_t lenth));
 
 bool power_manage_init();
 bool power_manage_deinit();

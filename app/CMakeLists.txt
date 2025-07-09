@@ -273,6 +273,37 @@ set(NRF_SDK_LINK
   ${NRF_SDK_ROOT}/external/nrf_oberon/lib/cortex-m4/hard-float/liboberon_3.0.1.a
 )
 
+set(
+  OK_APP_SRC
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_adv.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_init.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_peer_manage.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_bat.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_dev_info.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_fido.c
+  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_nus.c
+  ${PROJECT_SOURCE_DIR}/ok_communication/ok_cmd_protocol.c
+  ${PROJECT_SOURCE_DIR}/ok_communication/ok_cmd_protocol.c
+  ${PROJECT_SOURCE_DIR}/ok_communication/data_transmission.c
+  ${PROJECT_SOURCE_DIR}/ok_communication/ok_serial_communication.c
+  ${PROJECT_SOURCE_DIR}/ok_platform/device_config.c
+  ${PROJECT_SOURCE_DIR}/ok_platform/ecdsa.c
+  ${PROJECT_SOURCE_DIR}/ok_flashled/flashled_manage.c
+  ${PROJECT_SOURCE_DIR}/ok_power_manage/ok_pwr_manage_ctrl.c
+  ${PROJECT_SOURCE_DIR}/ok_power_manage/power_manage.c
+  ${PROJECT_SOURCE_DIR}/ok_wdt/ok_watch_dog.c
+)
+
+set(
+  OK_APP_INC
+  ${PROJECT_SOURCE_DIR}/ok_ble
+  ${PROJECT_SOURCE_DIR}/ok_communication
+  ${PROJECT_SOURCE_DIR}/ok_flashled
+  ${PROJECT_SOURCE_DIR}/ok_power_manage
+  ${PROJECT_SOURCE_DIR}/ok_wdt
+  ${PROJECT_SOURCE_DIR}/ok_platform
+)
+
 ###############################
 # micro-ecc
 
@@ -338,6 +369,7 @@ add_executable(
 target_sources(
   ${CMAKE_PROJECT_NAME} PRIVATE 
   ${NRF_SDK_SRC}
+  ${OK_APP_SRC}
   ../drivers/nrf_i2c.c
   ../drivers/nrf_uicr.c
   ../drivers/nrf_flash.c
@@ -346,18 +378,13 @@ target_sources(
   ../drivers/pmu/axp216.c
   ../drivers/pmu/axp2101.c
   ../drivers/light/lm36011.c
-  data_transmission.c
-  ecdsa.c
-  power_manage.c
-  flashled_manage.c
-  device_config.c
-  dfu_upgrade.c
 )
 
 target_include_directories(
   ${CMAKE_PROJECT_NAME} PRIVATE
   ${PROJECT_SOURCE_DIR}
   ${NRF_SDK_INC}
+  ${OK_APP_INC}
   ../artifacts # this is only for the dfu_upgrade_payload.h
   ../drivers
   ../drivers/pmu
