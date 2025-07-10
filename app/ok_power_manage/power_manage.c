@@ -9,6 +9,7 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_gpio.h"
+#include "app_scheduler.h"
 
 // workarounds to keep this file clean
 static uint8_t stm_data_buff[8];
@@ -16,6 +17,11 @@ static void (*send_stm_data_p)(void *pdata, uint16_t lenth);
 void set_send_stm_data_p(void (*send_stm_data_p_)(void *pdata, uint16_t lenth))
 {
     send_stm_data_p = send_stm_data_p_;
+}
+
+static void pmu_data_inform_peer(void *pdata, uint16_t lenth)
+{
+    send_stm_data_p(pdata, lenth);
 }
 
 // ================================
@@ -28,6 +34,8 @@ PMU_t                 *pmu_p = NULL;
 
 static void pmu_if_irq(const uint64_t irq)
 {
+    uint16_t data_len = 0;
+
     if (irq == 0) {
         return;
     }
@@ -39,21 +47,21 @@ static void pmu_if_irq(const uint64_t irq)
         stm_data_buff[0] = BLE_CMD_POWER_STA;
         stm_data_buff[1] = BLE_INSERT_POWER;
         stm_data_buff[2] = (pmu_p->PowerStatus->wiredCharge ? CHARGE_TYPE_USB : CHARGE_TYPE_WIRELESS);
-        send_stm_data_p(stm_data_buff, 3);
+        data_len = 3;
     }
     if (0 != (irq & (1 << PWR_IRQ_PWR_DISCONNECTED))) {
         NRF_LOG_INFO("irq PWR_IRQ_PWR_DISCONNECTED");
         stm_data_buff[0] = BLE_CMD_POWER_STA;
         stm_data_buff[1] = BLE_REMOVE_POWER;
         stm_data_buff[2] = 0;
-        send_stm_data_p(stm_data_buff, 3);
+        data_len = 3;
     }
     if (0 != (irq & (1 << PWR_IRQ_CHARGING))) {
         NRF_LOG_INFO("irq PWR_IRQ_CHARGING");
         stm_data_buff[0] = BLE_CMD_POWER_STA;
         stm_data_buff[1] = BLE_CHARGING_PWR;
         stm_data_buff[2] = (pmu_p->PowerStatus->wiredCharge ? CHARGE_TYPE_USB : CHARGE_TYPE_WIRELESS);
-        send_stm_data_p(stm_data_buff, 3);
+        data_len = 3;
     }
     // if ( 0 != (irq & (1 << PWR_IRQ_CHARGED)) )
     // {
@@ -73,25 +81,25 @@ static void pmu_if_irq(const uint64_t irq)
         NRF_LOG_INFO("irq PWR_IRQ_PB_PRESS");
         stm_data_buff[0] = BLE_CMD_KEY_STA;
         stm_data_buff[1] = BLE_KEY_PRESS;
-        send_stm_data_p(stm_data_buff, 2);
+        data_len = 2;
     }
     if (0 != (irq & (1 << PWR_IRQ_PB_RELEASE))) {
         NRF_LOG_INFO("irq PWR_IRQ_PB_RELEASE");
         stm_data_buff[0] = BLE_CMD_KEY_STA;
         stm_data_buff[1] = BLE_KEY_RELEASE;
-        send_stm_data_p(stm_data_buff, 2);
+        data_len = 2;
     }
     if (0 != (irq & (1 << PWR_IRQ_PB_SHORT))) {
         NRF_LOG_INFO("irq PWR_IRQ_PB_SHORT");
         stm_data_buff[0] = BLE_CMD_KEY_STA;
         stm_data_buff[1] = BLE_KEY_SHORT_PRESS;
-        send_stm_data_p(stm_data_buff, 2);
+        data_len = 2;
     }
     if (0 != (irq & (1 << PWR_IRQ_PB_LONG))) {
         NRF_LOG_INFO("irq PWR_IRQ_PB_LONG");
         stm_data_buff[0] = BLE_CMD_KEY_STA;
         stm_data_buff[1] = BLE_KEY_LONG_PRESS;
-        send_stm_data_p(stm_data_buff, 2);
+        data_len = 2;
     }
     if (0 != (irq & (1 << PWR_IRQ_PB_FORCEOFF))) {
     }
@@ -103,37 +111,41 @@ static void pmu_if_irq(const uint64_t irq)
             NRF_LOG_INFO("irq PWR_IRQ_PMU_OVER_TEMP");
             stm_data_buff[0] = BLE_CMD_POWER_ERR;
             stm_data_buff[1] = BLE_CMD_POWER_ERR__PMU_OVER_TEMP;
-            send_stm_data_p(stm_data_buff, 2);
+            data_len = 2;
         }
         if (0 != (irq & (1 << PWR_IRQ_BATT_OVER_TEMP))) {
             NRF_LOG_INFO("irq PWR_IRQ_BATT_OVER_TEMP");
             stm_data_buff[0] = BLE_CMD_POWER_ERR;
             stm_data_buff[1] = BLE_CMD_POWER_ERR__BATT_OVER_TEMP;
-            send_stm_data_p(stm_data_buff, 2);
+            data_len = 2;
         }
         if (0 != (irq & (1 << PWR_IRQ_BATT_UNDER_TEMP))) {
             NRF_LOG_INFO("irq PWR_IRQ_BATT_UNDER_TEMP");
             stm_data_buff[0] = BLE_CMD_POWER_ERR;
             stm_data_buff[1] = BLE_CMD_POWER_ERR__BATT_UNDER_TEMP;
-            send_stm_data_p(stm_data_buff, 2);
+            data_len = 2;
         }
         if (0 != (irq & (1 << PWR_IRQ_BATT_OVER_VOLTAGE))) {
             NRF_LOG_INFO("irq PWR_IRQ_BATT_OVER_VOLTAGE");
             stm_data_buff[0] = BLE_CMD_POWER_ERR;
             stm_data_buff[1] = BLE_CMD_POWER_ERR__BATT_OVER_VOLTAGE;
-            send_stm_data_p(stm_data_buff, 2);
+            data_len = 2;
         }
         if (0 != (irq & (1 << PWR_IRQ_CHARGE_TIMEOUT))) {
             NRF_LOG_INFO("irq PWR_IRQ_CHARGE_TIMEOUT");
             stm_data_buff[0] = BLE_CMD_POWER_ERR;
             stm_data_buff[1] = BLE_CMD_POWER_ERR__CHARGE_TIMEOUT;
-            send_stm_data_p(stm_data_buff, 2);
+            data_len = 2;
         }
     } else {
         NRF_LOG_INFO("irq BLE_CMD_POWER_ERR__NONE");
         stm_data_buff[0] = BLE_CMD_POWER_ERR;
         stm_data_buff[1] = BLE_CMD_POWER_ERR__NONE;
-        send_stm_data_p(stm_data_buff, 2);
+        data_len = 2;
+    }
+
+    if (data_len > 0) {
+        app_sched_event_put(stm_data_buff, data_len, pmu_data_inform_peer);
     }
 }
 

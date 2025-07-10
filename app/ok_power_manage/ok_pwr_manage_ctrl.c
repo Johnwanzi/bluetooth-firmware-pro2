@@ -296,13 +296,11 @@ void ok_pmu_init(void)
 {
 #define PMU_WAKEUP_RETRY_COUNT 10
 
-    PMU_t *pmu_p = power_manage_ctx_get();
-
     set_send_stm_data_p(ok_send_stm_data);
 
     int i;
     for (i = 0; i < PMU_WAKEUP_RETRY_COUNT; i++) {
-        if (power_manage_init() && (pmu_p != NULL && pmu_p->isInitialized)) {
+        if (power_manage_init() && (power_manage_ctx_get() != NULL && power_manage_ctx_get()->isInitialized)) {
             OK_LOG_INFO("PMU Init Success");
             break;
         }
