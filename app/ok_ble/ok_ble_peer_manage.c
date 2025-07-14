@@ -15,6 +15,7 @@
 #include "ok_ble_internal.h"
 #include "ok_communication.h"
 #include "ok_cmd_protocol.h"
+#include "ok_ble.h"
 
 #define SEC_PARAM_BOND            1 /**< Perform bonding. */
 #define SEC_PARAM_MITM            1 /**< Man In The Middle protection required (applicable when display module is detected). */
@@ -126,7 +127,10 @@ static void pm_evt_handler(const pm_evt_t *p_evt)
         case PM_EVT_PEER_DELETE_SUCCEEDED:
         case PM_EVT_PEER_DELETE_FAILED:
         case PM_EVT_PEERS_DELETE_FAILED:
+            OK_LOG_INFO_NOFLUSH("pm_evt_handler evt_id %d", p_evt->evt_id);
+            break;
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
+            ok_ble_adv_ctrl(0);
             OK_LOG_INFO_NOFLUSH("pm_evt_handler evt_id %d", p_evt->evt_id);
             break;
 

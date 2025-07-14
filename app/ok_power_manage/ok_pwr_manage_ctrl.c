@@ -2,6 +2,7 @@
 #include <string.h>
 #include "nordic_common.h"
 #include "app_error.h"
+#include "app_timer.h"
 #include "nrf_soc.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_uarte.h"
@@ -16,6 +17,7 @@
 #include "ok_pwr_manage.h"
 #include "ok_communication.h"
 #include "ok_platform.h"
+#include "ok_ble.h"
 
 #define ST_WAKE_IO 22
 
@@ -151,7 +153,14 @@ static void pmu_irq_pull()
 
 static void pmu_status_refresh()
 {
+    #define FIVE_MS_TO_RTC_COUNTER (5 * APP_TIMER_CLOCK_FREQ / (APP_TIMER_CONFIG_RTC_FREQUENCY + 1))
+    static uint32_t s_rtc_counter = 0;
     PMU_t *pmu_p = power_manage_ctx_get();
+
+    if (((APP_TIMER_MAX_CNT_VAL + app_timer_cnt_get() - s_rtc_counter) % APP_TIMER_MAX_CNT_VAL) > FIVE_MS_TO_RTC_COUNTER) {
+        s_rtc_counter = app_timer_cnt_get();
+        pmu_status_synced = false;
+    }
 
     if (pmu_status_synced) {
         return;
@@ -238,7 +247,7 @@ void enter_low_power_mode(void)
     usr_spi_disable();
 
     // stop bt adv
-    // TODO1K
+    ok_ble_adv_ctrl(0);
 
     // release pmu interface
     if ((pmu_p != NULL) && (pmu_p->isInitialized)) {

@@ -117,7 +117,7 @@ static void ok_cmd_uplink_pwr_ctrl_handler(void *data, uint16_t length)
     PMU_t *pmu_p = power_manage_ctx_get();
 
     if (sub_cmd == OK_UPLINK_SUB_CMD_SYS_POWER_TURN_OFF) {
-        // TODO1K turn off ble
+        ok_ble_gap_local_disconnect();
         pmu_p->SetState(PWR_STATE_HARD_OFF);
     } else if (sub_cmd == OK_UPLINK_SUB_CMD_EMMC_POWER_TURN_OFF) {
     } else if (sub_cmd == OK_UPLINK_SUB_CMD_EMCC_POWER_TURN_ON) {

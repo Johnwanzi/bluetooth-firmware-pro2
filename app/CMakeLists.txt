@@ -368,7 +368,8 @@ add_executable(
   main.c
 )
 
-if(RTT_DEBUG_ENABLE EQUAL 1)
+if(RTT_DEBUG_ENABLE)
+  message(STATUS "Enable Rtt Debug")
   set(
     OK_TEST_SRC
     ${PROJECT_SOURCE_DIR}/ok_xdebug/rtt_misc_debug.c
@@ -422,6 +423,7 @@ execute_process(
 	OUTPUT_VARIABLE GIT_VERSION
 )
 add_definitions('-DBUILD_ID=\"${GIT_VERSION}\"')
+add_definitions("-DRTT_DEBUG_ENABLE=${RTT_DEBUG_ENABLE}")
 
 target_compile_definitions(
   ${CMAKE_PROJECT_NAME} PRIVATE
