@@ -494,6 +494,7 @@ target_link_options(
   # use newlib in nano version
   --specs=nano.specs -lc -lnosys -lm
   -L${NRF_SDK_ROOT}/modules/nrfx/mdk -T${PROJECT_SOURCE_DIR}/ble_app_gcc_nrf52.ld
+  -Wl,-Map=${CMAKE_PROJECT_NAME}.map
 )
 
 target_link_libraries(

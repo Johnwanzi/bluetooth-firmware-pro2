@@ -100,7 +100,7 @@
 #include "ok_watch_dog.h"
 
 #define SCHED_MAX_EVENT_DATA_SIZE   256 //!< Maximum size of the scheduler event data.
-#define SCHED_QUEUE_SIZE            8   //!< Size of the scheduler queue.
+#define SCHED_QUEUE_SIZE            10   //!< Size of the scheduler queue.
 
 static void in_gpiote_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t action);
 
