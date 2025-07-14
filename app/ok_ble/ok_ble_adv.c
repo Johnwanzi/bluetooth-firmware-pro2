@@ -89,3 +89,29 @@ void ok_ble_adv_ctrl(uint8_t enable)
         ble_advertising_stop(&m_advertising);
     }
 }
+
+void ok_ble_adv_process(void)
+{
+    // default setting: ble advertising start when power on
+    static bool b_adv_set_poweron = false;
+    if (!b_adv_set_poweron) {
+        ok_ble_adv_ctrl(1);
+        ok_ble_adv_onoff_status = 1;
+        b_adv_set_poweron       = true;
+    }
+
+    ok_devcfg_t *devcfg = ok_device_config_get();
+    if (devcfg->settings.flag_initialized == DEVICE_CONFIG_FLAG_MAGIC) {
+        if (devcfg->settings.bt_ctrl != DEVICE_CONFIG_FLAG_MAGIC && ok_ble_adv_onoff_status == 0) {
+            NRF_LOG_INFO("ble adv start.");
+            ok_ble_adv_ctrl(1);
+            return;
+        }
+
+        if (devcfg->settings.bt_ctrl == DEVICE_CONFIG_FLAG_MAGIC && ok_ble_adv_onoff_status) {
+            NRF_LOG_INFO("ble adv stop.");
+            ok_ble_adv_ctrl(0);
+            return;
+        }
+    }
+}

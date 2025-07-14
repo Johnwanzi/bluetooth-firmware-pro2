@@ -91,7 +91,6 @@
 
 #include "util_macros.h"
 #include "firmware_config.h"
-#include "device_config.h"
 
 #include "ok_platform.h"
 #include "ok_ble.h"
@@ -188,25 +187,6 @@ static void in_gpiote_handler(nrfx_gpiote_pin_t pin, nrf_gpiote_polarity_t actio
     }
 }
 
-// Onekey device configuration initialization
-static void ok_dev_config_init(void)
-{
-    #define DEV_CONFIG_INIT_RETRY_COUNT 3
-
-    int i;
-    for (i = 0; i < DEV_CONFIG_INIT_RETRY_COUNT; i++) {
-        if (device_config_init()) {
-            OK_LOG_INFO("Config Init Success");
-            break;
-        }
-    }
-
-    if (i == DEV_CONFIG_INIT_RETRY_COUNT) {
-        OK_LOG_WARN("Config Init Fail");
-        enter_low_power_mode();
-    }
-}
-
 static void ok_periph_init(void)
 {
     OK_LOG_INFO("Onekey Peripherals Init.");
@@ -271,18 +251,11 @@ int main(void)
     nrf_crypto_init(); // why here
 
     ok_pmu_init();
-    ok_dev_config_init();
+    ok_device_config_init();
     ok_periph_init();
     ok_ble_init();
 
     scheduler_init();
-
-    #if 1
-    ok_ble_adv_ctrl(true); 
-    #else
-    ok_ble_adv_ctrl(deviceConfig_p->settings.flag_initialized == DEVICE_CONFIG_FLAG_MAGIC && 
-          deviceConfig_p->settings.bt_ctrl != DEVICE_CONFIG_FLAG_MAGIC);
-    #endif
 
     ok_power_mode_config();
     ok_app_timers_start();
@@ -291,11 +264,17 @@ int main(void)
     OK_LOG_INFO("Main Loop Start");
 
     for (;;) {
+        ok_ble_adv_process();
         app_sched_execute();
         ok_pmu_sche_process();
         ok_battery_level_sync();
         ok_peer_manager_lesc_process();     
         idle_state_handle();
+
+        #if RTT_DEBUG_ENABLE
+        void ok_rtt_detect_input(void);
+        ok_rtt_detect_input();
+        #endif
     }
 }
 /**

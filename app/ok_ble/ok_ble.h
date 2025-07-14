@@ -15,6 +15,7 @@ char   *ok_ble_adv_name_get(void);
 void    ok_ble_adv_ctrl(uint8_t enable);
 void    ok_ble_adv_onoff_set(uint8_t onoff);
 uint8_t ok_ble_adv_onoff_get(void);
+void    ok_ble_adv_process(void);
 void    ok_ble_gap_local_disconnect(void);
 
 void    ok_peer_manager_lesc_process(void);

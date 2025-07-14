@@ -6,7 +6,6 @@
 #include "app_scheduler.h"
 
 #include "firmware_config.h"
-#include "device_config.h"
 #include "ok_cmd_protocol.h"
 #include "ok_platform.h"
 #include "ok_pwr_manage.h"
@@ -58,14 +57,15 @@ static void ok_cmd_uplink_ble_ctrl_handler(void *data, uint16_t length)
         return;
     }
 
+    ok_devcfg_t *devcfg = ok_device_config_get();
     sub_cmd = *(uint8_t *)data;
     OK_LOG_INFO("enter ok_cmd_uplink_ble_ctrl_handler %d", sub_cmd);
 
     if (sub_cmd == OK_UPLINK_SUB_CMD_BLE_TURN_ON) {
 
         ok_ble_adv_onoff_set(1);
-        deviceConfig_p->settings.bt_ctrl = 0;
-        device_config_commit();
+        devcfg->settings.bt_ctrl = 0;
+        ok_device_config_commit();
 
         bak_buff[0] = OK_DOWNLINK_MAIN_CMD_BLE_STATUS;
         bak_buff[1] = OK_DOWNLINK_SUB_CMD_BLE_TURN_ON;
@@ -74,8 +74,8 @@ static void ok_cmd_uplink_ble_ctrl_handler(void *data, uint16_t length)
     } else if (sub_cmd == OK_UPLINK_SUB_CMD_BLE_TURN_OFF) {
 
         ok_ble_adv_onoff_set(0);
-        deviceConfig_p->settings.bt_ctrl = DEVICE_CONFIG_FLAG_MAGIC;
-        device_config_commit();
+        devcfg->settings.bt_ctrl = DEVICE_CONFIG_FLAG_MAGIC;
+        ok_device_config_commit();
 
         bak_buff[0] = OK_DOWNLINK_MAIN_CMD_BLE_STATUS;
         bak_buff[1] = OK_DOWNLINK_SUB_CMD_BLE_TURN_OFF;
@@ -335,41 +335,42 @@ static void ok_cmd_uplink_ble_sign_handler(void *data, uint16_t length)
         return;
     }
 
+    ok_devcfg_t *devcfg = ok_device_config_get();
     sub_cmd = *(uint8_t *)data;
     OK_LOG_INFO("enter ok_cmd_uplink_ble_sign_handler %d", sub_cmd);
 
     if (sub_cmd == OK_UPLINK_SUB_CMD_BLE_PUBKEY) {
         bak_buff[0] = OK_DOWNLINK_MAIN_CMD_SIGN;
-        if (deviceConfig_p->keystore.flag_locked == DEVICE_CONFIG_FLAG_MAGIC) {
+        if (devcfg->keystore.flag_locked == DEVICE_CONFIG_FLAG_MAGIC) {
             bak_buff[1] = SIGN_PUBKEY_FAILED; /* failed */
             rsp_len     = 2;
-        } else if (!deviceCfg_keystore_validate(&(deviceConfig_p->keystore))) {
+        } else if (!ok_devcfg_keystore_validate(&(devcfg->keystore))) {
             bak_buff[1] = SIGN_PUBKEY_FAILED;
             rsp_len     = 2;
         } else {
             bak_buff[1] = SIGN_PUBKEY_DATA; /* success */
-            memcpy(&bak_buff[2], deviceConfig_p->keystore.public_key, sizeof(deviceConfig_p->keystore.public_key));
-            rsp_len = sizeof(deviceConfig_p->keystore.public_key) + 2;
+            memcpy(&bak_buff[2], devcfg->keystore.public_key, sizeof(devcfg->keystore.public_key));
+            rsp_len = sizeof(devcfg->keystore.public_key) + 2;
         }
     } else if (sub_cmd == OK_UPLINK_SUB_CMD_BLE_PUBKEY_LOCK) {
         bak_buff[0] = OK_DOWNLINK_MAIN_CMD_SIGN;
-        bak_buff[1] = (deviceCfg_keystore_lock(&(deviceConfig_p->keystore)) && device_config_commit()) ? SIGN_PUBKEY_SUCCESS : SIGN_PUBKEY_FAILED;
+        bak_buff[1] = (ok_devcfg_keystore_lock(&(devcfg->keystore)) && ok_device_config_commit()) ? SIGN_PUBKEY_SUCCESS : SIGN_PUBKEY_FAILED;
 
         rsp_len = 2;
     } else if (sub_cmd == OK_UPLINK_SUB_CMD_BLE_SIGN_REQUEST) {
         bak_buff[0] = OK_DOWNLINK_MAIN_CMD_SIGN;
 
-        if (!deviceCfg_keystore_validate(&(deviceConfig_p->keystore))) {
+        if (!ok_devcfg_keystore_validate(&(devcfg->keystore))) {
             bak_buff[1] = SIGN_PUBKEY_FAILED;
             rsp_len     = 2;
         } else {
             bak_buff[1] = SIGN_DATA;
-            if (deviceConfig_p->keystore.flag_locked != DEVICE_CONFIG_FLAG_MAGIC) {
-                deviceCfg_keystore_lock(&(deviceConfig_p->keystore));
-                device_config_commit();
+            if (devcfg->keystore.flag_locked != DEVICE_CONFIG_FLAG_MAGIC) {
+                ok_devcfg_keystore_lock(&(devcfg->keystore));
+                ok_device_config_commit();
             }
             /* sub_cmd + payload */
-            sign_ecdsa_msg(deviceConfig_p->keystore.private_key, (uint8_t *)data + 1, length - 1, bak_buff + 2);
+            sign_ecdsa_msg(devcfg->keystore.private_key, (uint8_t *)data + 1, length - 1, bak_buff + 2);
             rsp_len = 64 + 2;
         }
     }

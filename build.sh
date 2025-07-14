@@ -15,7 +15,7 @@ rm -rf artifacts_signed
 rm -rf _build
 # build
 mkdir -p _build
-cmake  -G 'Ninja'  -S ./  -B ./_build -DTOOL_CHAIN_PREFIX=$TOOL_CHAIN_PREFIX
+cmake  -G 'Ninja'  -S ./  -B ./_build -DTOOL_CHAIN_PREFIX=$TOOL_CHAIN_PREFIX -DCMAKE_BUILD_TYPE=Debug
 cmake --build ./_build --config Debug -- -j1
 utils/hash.py -t bluetooth -f artifacts/OnekeyProBTFW_APP.bin > artifacts/sha256.txt
 # remove build folder

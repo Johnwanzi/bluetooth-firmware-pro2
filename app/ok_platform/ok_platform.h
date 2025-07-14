@@ -4,8 +4,9 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
-#include "device_config.h"
 #include "ecdsa.h"
+#include "ok_storage.h"
+#include "ok_device_config.h"
 
 #define OK_LOG_INFO(...)    NRF_LOG_INFO(__VA_ARGS__); \
                             NRF_LOG_FLUSH();

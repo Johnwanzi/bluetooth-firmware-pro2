@@ -286,8 +286,10 @@ set(
   ${PROJECT_SOURCE_DIR}/ok_communication/ok_cmd_protocol.c
   ${PROJECT_SOURCE_DIR}/ok_communication/data_transmission.c
   ${PROJECT_SOURCE_DIR}/ok_communication/ok_serial_communication.c
-  ${PROJECT_SOURCE_DIR}/ok_platform/device_config.c
+  #${PROJECT_SOURCE_DIR}/ok_platform/device_config.c
   ${PROJECT_SOURCE_DIR}/ok_platform/ecdsa.c
+  ${PROJECT_SOURCE_DIR}/ok_platform/ok_storage.c
+  ${PROJECT_SOURCE_DIR}/ok_platform/ok_device_config.c
   ${PROJECT_SOURCE_DIR}/ok_flashled/flashled_manage.c
   ${PROJECT_SOURCE_DIR}/ok_power_manage/ok_pwr_manage_ctrl.c
   ${PROJECT_SOURCE_DIR}/ok_power_manage/power_manage.c
@@ -365,6 +367,29 @@ add_executable(
   ${CMAKE_PROJECT_NAME} 
   main.c
 )
+
+if(RTT_DEBUG_ENABLE EQUAL 1)
+  set(
+    OK_TEST_SRC
+    ${PROJECT_SOURCE_DIR}/ok_xdebug/rtt_misc_debug.c
+    ${PROJECT_SOURCE_DIR}/ok_xdebug/xdebug_flash_test.c
+  )
+
+  set(
+    OK_TEST_INC
+    ${PROJECT_SOURCE_DIR}/ok_xdebug
+  )
+
+  target_sources(
+    ${CMAKE_PROJECT_NAME} PRIVATE 
+    ${OK_TEST_SRC}
+  )
+
+  target_include_directories(
+    ${CMAKE_PROJECT_NAME} PRIVATE
+    ${OK_TEST_INC}
+  )
+endif()
 
 target_sources(
   ${CMAKE_PROJECT_NAME} PRIVATE 

@@ -164,7 +164,7 @@ static void gap_params_init(void)
 
     memset(ble_adv_name, 0x00, sizeof(ble_adv_name));
     strncpy(ble_adv_name, (char *)ADV_HEAD_NAME, strlen(ADV_HEAD_NAME));
-    sprintf(ble_adv_name + strlen(ADV_HEAD_NAME), "%02x%02x", gap_addr.addr[1], gap_addr.addr[0]);
+    sprintf(ble_adv_name + strlen(ADV_HEAD_NAME), "%02X%02X", gap_addr.addr[1], gap_addr.addr[0]);
 
     err_code = sd_ble_gap_device_name_set(&sec_mode, (const uint8_t *)ble_adv_name, strlen(ble_adv_name));
     APP_ERROR_CHECK(err_code);
