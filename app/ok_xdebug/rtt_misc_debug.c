@@ -57,6 +57,11 @@ void ok_rtt_detect_input(void)
             OK_LOG_INFO("Delta ms %d", ((NRF_RTC1->COUNTER - rtc32) * 1000) >> 14);
         } break;
 
+        case '3': {
+            extern void xdebug_nvs_test(void);
+            xdebug_nvs_test();
+        } break;
+
         default:
             break;
     }

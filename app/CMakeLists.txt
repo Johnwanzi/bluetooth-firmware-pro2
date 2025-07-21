@@ -372,13 +372,16 @@ if(RTT_DEBUG_ENABLE)
   message(STATUS "Enable Rtt Debug")
   set(
     OK_TEST_SRC
+    ${PROJECT_SOURCE_DIR}/ok_platform/nvs/nvs.c
     ${PROJECT_SOURCE_DIR}/ok_xdebug/rtt_misc_debug.c
     ${PROJECT_SOURCE_DIR}/ok_xdebug/xdebug_flash_test.c
+    ${PROJECT_SOURCE_DIR}/ok_xdebug/xdebug_flash_nvs_test.c
   )
 
   set(
     OK_TEST_INC
     ${PROJECT_SOURCE_DIR}/ok_xdebug
+    ${PROJECT_SOURCE_DIR}/ok_platform/nvs
   )
 
   target_sources(
