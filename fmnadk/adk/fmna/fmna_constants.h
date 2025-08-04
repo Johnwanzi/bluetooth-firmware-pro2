@@ -11,11 +11,7 @@
 
 #include "fmna_constants_platform.h"
 
-#ifdef USE_CRYPTO
 #define HARDCODED_PAIRING_ENABLED 0
-#else // USE_CRYPTO
-#define HARDCODED_PAIRING_ENABLED 1
-#endif // USE_CRYPTO
 
 #define FMNA_COMPANY_IDENTIFIER                        0x004C                                      /**< Company identifier for Apple. as per www.bluetooth.org. */
 #define DEVICE_NAME                                   "Find My Accessory"

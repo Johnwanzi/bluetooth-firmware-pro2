@@ -360,6 +360,10 @@ target_link_options(
   -L${NRF_SDK_ROOT}/modules/nrfx/mdk -T${MicroECC_DIR}/nrf52hf_armgcc/armgcc/ext_micro_ecc_gcc_nRF5x.ld
 )
 
+# ###############################
+# # FMNADK Library
+# add_subdirectory(../fmnadk)
+
 ###############################
 # Target
 
@@ -504,6 +508,7 @@ target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE
   ${NRF_SDK_LINK}
   MicroECC
+  # FMNADK
   m # math
 )
 
