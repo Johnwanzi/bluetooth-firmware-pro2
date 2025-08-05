@@ -509,7 +509,6 @@ target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE
   ${NRF_SDK_LINK}
   MicroECC
-  # FMNADK
   m # math
 )
 

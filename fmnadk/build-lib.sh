@@ -22,7 +22,7 @@ cd build
 # Configure CMake
 print_info "Configuring CMake..."
 print_info "Using toolchain: $TOOL_CHAIN_PREFIX"
-cmake .. -DCMAKE_BUILD_TYPE=Release -DTOOL_CHAIN_PREFIX=$TOOL_CHAIN_PREFIX
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DTOOL_CHAIN_PREFIX=$TOOL_CHAIN_PREFIX
 
 if [ $? -ne 0 ]; then
     print_error "CMake configuration failed!"
@@ -32,6 +32,7 @@ fi
 # Build library
 print_info "Building library..."
 make -j$(nproc)
+make install
 
 if [ $? -eq 0 ]; then
     cd ..

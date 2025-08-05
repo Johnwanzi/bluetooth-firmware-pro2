@@ -170,6 +170,12 @@ add_library(
 # Include directories
 target_include_directories(
   fmnadk PUBLIC
+  ${PROJECT_SOURCE_DIR}
+)
+
+# Private include directories - not exposed to users of the library
+target_include_directories(
+  fmnadk PRIVATE
   ${FMNA_INC}
   ${NRF_SDK_INC}
   ${PROJECT_SOURCE_DIR}/../app
@@ -263,33 +269,17 @@ target_link_options(
 )
 
 ########################### Install #############################
-# Install
+# Set install prefix to current library directory
+set(CMAKE_INSTALL_PREFIX "${PROJECT_SOURCE_DIR}" CACHE PATH "Installation Directory" FORCE)
+
+# Install library
 install(
   TARGETS fmnadk
   ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
 )
 
-install(
-  DIRECTORY ${PROJECT_SOURCE_DIR}/adk/fmna
-  DESTINATION include/fmnadk
-  FILES_MATCHING PATTERN "*.h"
-)
-
-install(
-  DIRECTORY ${PROJECT_SOURCE_DIR}/adk/platform
-  DESTINATION include/fmnadk
-  FILES_MATCHING PATTERN "*.h"
-)
-
-install(
-  DIRECTORY ${PROJECT_SOURCE_DIR}/adk/crypto
-  DESTINATION include/fmnadk
-  FILES_MATCHING PATTERN "*.h"
-)
-
+# Install only the public header file
 install(
   FILES ${PROJECT_SOURCE_DIR}/fmna_app.h
-  DESTINATION include/fmnadk
+  DESTINATION lib
 ) 
