@@ -86,6 +86,7 @@ static const char * m_sec_procedure_str[] =
 static const char * m_event_str[] =
 {
     PM_EVT_STR(PM_EVT_BONDED_PEER_CONNECTED),
+    PM_EVT_STR(PM_EVT_CONNECTED), 
     PM_EVT_STR(PM_EVT_CONN_SEC_START),
     PM_EVT_STR(PM_EVT_CONN_SEC_SUCCEEDED),
     PM_EVT_STR(PM_EVT_CONN_SEC_FAILED),
@@ -495,6 +496,10 @@ void pm_handler_pm_evt_log(pm_evt_t const * p_pm_evt)
                           p_pm_evt->conn_handle,
                           p_pm_evt->peer_id);
             break;
+
+        case PM_EVT_CONNECTED: 
+            NRF_LOG_DEBUG("Connected to a new peer"); 
+            break; 
 
         case PM_EVT_CONN_SEC_START:
             NRF_LOG_DEBUG("Connection security procedure started: role: %s, conn_handle: %d, procedure: %s",

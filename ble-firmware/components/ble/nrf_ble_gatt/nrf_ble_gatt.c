@@ -121,7 +121,9 @@ static ret_code_t data_length_update(uint16_t conn_handle, uint16_t data_length)
  */
 static void on_connected_evt(nrf_ble_gatt_t * p_gatt, ble_evt_t const * p_ble_evt)
 {
-    ret_code_t            err_code;
+#if !(defined S132) 
+    ret_code_t            err_code = NRF_SUCCESS;
+#endif
     uint16_t              conn_handle = p_ble_evt->evt.common_evt.conn_handle;
     nrf_ble_gatt_link_t * p_link      = &p_gatt->links[conn_handle];
 
@@ -147,6 +149,9 @@ static void on_connected_evt(nrf_ble_gatt_t * p_gatt, ble_evt_t const * p_ble_ev
             break;
     }
 
+/* S132 peripheral-only SoftDevice will never be GATT Client, so 
+ * should never initiate GATT MTU negotiation. */ 
+#if !(defined S132)
     // Begin an ATT MTU exchange if necessary.
     if (p_link->att_mtu_desired > p_link->att_mtu_effective)
     {
@@ -171,6 +176,7 @@ static void on_connected_evt(nrf_ble_gatt_t * p_gatt, ble_evt_t const * p_ble_ev
                           nrf_strerror_get(err_code));
         }
     }
+#endif
 
 #if !defined (S112) && !defined(S312)
     // Send a data length update request if necessary.

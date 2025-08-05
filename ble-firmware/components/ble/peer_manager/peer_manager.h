@@ -823,6 +823,24 @@ ret_code_t pm_peer_ranks_get(pm_peer_id_t * p_highest_ranked_peer,
  */
 ret_code_t pm_peer_rank_highest(pm_peer_id_t peer_id);
 
+/**@brief Function for excluding a connection from the BLE event flow that is handled 
+ *        inside the Peer Manager. 
+ * 
+ * @details This function is optional, and must be called in reply to a @ref PM_EVT_CONNECTED 
+ *          event, before the Peer Manager event handler returns. If it is not called in time, 
+ *          BLE events for a connection handle passed in the @ref PM_EVT_CONNECTED event will 
+ *          be normally handled by the Peer Manager. 
+ * 
+ * @param[in]  conn_handle   The connection to be excluded. 
+ * @param[in]  p_context     The context found in the request event that this function replies to. 
+ * 
+ * @retval NRF_SUCCESS              Successful reply. 
+ * @retval NRF_ERROR_NULL           p_context was null. 
+ */ 
+ret_code_t pm_conn_exclude(uint16_t conn_handle, void const * p_context); 
+bool pm_is_conn_handle_excluded(ble_evt_t const * p_ble_evt);
+
+
 /** @}*/
 
 /** @} */
