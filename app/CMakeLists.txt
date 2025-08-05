@@ -422,7 +422,7 @@ target_include_directories(
   ../drivers
   ../drivers/pmu
   ../drivers/light
-  ../fmnadk/adk/platform
+  ../fmnadk
 )
 
 execute_process(
@@ -509,6 +509,7 @@ target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE
   ${NRF_SDK_LINK}
   MicroECC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../fmnadk/lib/libfmnadk.a
   m # math
 )
 
