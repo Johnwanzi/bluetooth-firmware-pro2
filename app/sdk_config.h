@@ -43,7 +43,7 @@
 #ifndef SDK_CONFIG_H
 #define SDK_CONFIG_H
 
-#include "fmnadk/adk/platform/fmna_config.h"
+#include "fmna_config.h"
 
 // <<< Use Configuration Wizard in Context Menu >>>\n
 #ifdef USE_APP_CONFIG

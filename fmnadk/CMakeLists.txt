@@ -13,11 +13,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 message(STATUS "${CMAKE_PROJECT_NAME} Build Type: ${CMAKE_BUILD_TYPE}")
 
 ###############################
-
-###############################
-# FMNADK Source Files
-
-# FMNA core source files
+# fmna core source files
 set(
   FMNA_CORE_SRC
   ${PROJECT_SOURCE_DIR}/adk/fmna/fmna_adv.c
@@ -89,38 +85,70 @@ set(
 )
 
 ###############################
-# NRF SDK (same as app/CMakeLists.txt)
+# NRF SDK
 set(NRF_SDK_ROOT "${PROJECT_SOURCE_DIR}/../ble-firmware")
 
 set(
   NRF_SDK_INC
+
   ${NRF_SDK_ROOT}/components
   ${NRF_SDK_ROOT}/components/boards
-  ${NRF_SDK_ROOT}/components/ble/ble_advertising
-  ${NRF_SDK_ROOT}/components/ble/common
-  ${NRF_SDK_ROOT}/components/ble/nrf_ble_gatt
-  ${NRF_SDK_ROOT}/components/ble/nrf_ble_gq
-  ${NRF_SDK_ROOT}/components/ble/nrf_ble_qwr
-  ${NRF_SDK_ROOT}/components/ble/peer_manager
-  ${NRF_SDK_ROOT}/components/libraries/hardfault
-  ${NRF_SDK_ROOT}/components/libraries/pwr_mgmt
-  ${NRF_SDK_ROOT}/components/libraries/stack_guard
-  ${NRF_SDK_ROOT}/components/libraries/stack_info
-  ${NRF_SDK_ROOT}/components/libraries/scheduler
-  ${NRF_SDK_ROOT}/components/libraries/strerror
-  ${NRF_SDK_ROOT}/components/libraries/delay
-  ${NRF_SDK_ROOT}/components/libraries/util
-  ${NRF_SDK_ROOT}/components/libraries/timer
+  ${NRF_SDK_ROOT}/components/libraries/bsp
+  ${NRF_SDK_ROOT}/components/libraries/button
   ${NRF_SDK_ROOT}/components/libraries/log
   ${NRF_SDK_ROOT}/components/libraries/log/src
-  ${NRF_SDK_ROOT}/components/libraries/sortlist
-  ${NRF_SDK_ROOT}/components/libraries/atomic
+  ${NRF_SDK_ROOT}/components/libraries/fstorage
+  ${NRF_SDK_ROOT}/components/libraries/mutex
+  ${NRF_SDK_ROOT}/components/libraries/gpiote
+  ${NRF_SDK_ROOT}/components/libraries/queue
+  ${NRF_SDK_ROOT}/components/libraries/pwr_mgmt
+  ${NRF_SDK_ROOT}/components/libraries/mpu
   ${NRF_SDK_ROOT}/components/libraries/experimental_section_vars
+  ${NRF_SDK_ROOT}/components/libraries/slip
+  ${NRF_SDK_ROOT}/components/libraries/delay
+  ${NRF_SDK_ROOT}/components/libraries/mem_manager
+  ${NRF_SDK_ROOT}/components/libraries/csense_drv
+  ${NRF_SDK_ROOT}/components/libraries/memobj
+  ${NRF_SDK_ROOT}/components/libraries/low_power_pwm
+  ${NRF_SDK_ROOT}/components/libraries/svc
+  ${NRF_SDK_ROOT}/components/libraries/uart
+  ${NRF_SDK_ROOT}/components/libraries/atomic
+  ${NRF_SDK_ROOT}/components/libraries/scheduler
+  ${NRF_SDK_ROOT}/components/libraries/cli
+  ${NRF_SDK_ROOT}/components/libraries/crc16
+  ${NRF_SDK_ROOT}/components/libraries/util
+  ${NRF_SDK_ROOT}/components/libraries/csense
+  ${NRF_SDK_ROOT}/components/libraries/balloc
+  ${NRF_SDK_ROOT}/components/libraries/ecc
+  ${NRF_SDK_ROOT}/components/libraries/hardfault
+  ${NRF_SDK_ROOT}/components/libraries/hci
+  ${NRF_SDK_ROOT}/components/libraries/timer
+  ${NRF_SDK_ROOT}/components/libraries/sortlist
+  ${NRF_SDK_ROOT}/components/libraries/twi_mngr
+  ${NRF_SDK_ROOT}/components/libraries/strerror
+  ${NRF_SDK_ROOT}/components/libraries/crc32
+  ${NRF_SDK_ROOT}/components/libraries/ringbuf
+  ${NRF_SDK_ROOT}/components/libraries/gfx
+  ${NRF_SDK_ROOT}/components/libraries/twi_sensor
+  ${NRF_SDK_ROOT}/components/libraries/atomic_fifo
+  ${NRF_SDK_ROOT}/components/libraries/crypto
+  ${NRF_SDK_ROOT}/components/libraries/fds
+  ${NRF_SDK_ROOT}/components/libraries/atomic_flags
+  ${NRF_SDK_ROOT}/components/libraries/stack_guard
+  ${NRF_SDK_ROOT}/components/ble/ble_advertising
+  ${NRF_SDK_ROOT}/components/ble/common
+  ${NRF_SDK_ROOT}/components/ble/ble_dtm
+  ${NRF_SDK_ROOT}/components/ble/ble_services/ble_tps
+  ${NRF_SDK_ROOT}/components/ble/ble_racp
+  ${NRF_SDK_ROOT}/components/ble/peer_manager
+  ${NRF_SDK_ROOT}/components/ble/nrf_ble_gatt
   ${NRF_SDK_ROOT}/components/softdevice/common
   ${NRF_SDK_ROOT}/components/softdevice/s132/headers
   ${NRF_SDK_ROOT}/components/softdevice/s132/headers/nrf52
+  ${NRF_SDK_ROOT}/external/utf_converter
+  ${NRF_SDK_ROOT}/external/fprintf
+  ${NRF_SDK_ROOT}/external/segger_rtt
   ${NRF_SDK_ROOT}/components/toolchain/cmsis/include
-  
   ${NRF_SDK_ROOT}/modules/nrfx
   ${NRF_SDK_ROOT}/modules/nrfx/drivers/include
   ${NRF_SDK_ROOT}/modules/nrfx/hal
@@ -129,11 +157,11 @@ set(
   ${NRF_SDK_ROOT}/integration/nrfx/legacy
 )
 
-###############################
-# Create FMNADK Static Library
+########################### Create FMNADK Static Library ###################
+# Create Fmnadk Static Library
 
 add_library(
-  FMNADK STATIC
+  fmnadk STATIC
   ${FMNA_CORE_SRC}
   ${FMNA_PLATFORM_SRC}
   ${WOLFSSL_SRC}
@@ -141,78 +169,103 @@ add_library(
 
 # Include directories
 target_include_directories(
-  FMNADK PUBLIC
+  fmnadk PUBLIC
   ${FMNA_INC}
   ${NRF_SDK_INC}
   ${PROJECT_SOURCE_DIR}/../app
 )
 
-# Compile definitions
+########################### Compile definitions #############################
 target_compile_definitions(
-  FMNADK PUBLIC
+  fmnadk PUBLIC
+  # ARM architecture definitions
+  __SIZEOF_WCHAR_T=4
+  __ARM_ARCH_7EM__
+  __ARM_ARCH_FPV4_SP_D16__
+  INITIALIZE_USER_SECTIONS
+  NO_VTOR_CONFIG
+
   # Project flags
   APP_TIMER_V2
   APP_TIMER_V2_RTC1_ENABLED
   CONFIG_GPIO_AS_PINRESET
+  BOARD_PCA10040
   FLOAT_ABI_HARD
   NRF52
   NRF52832_XXAA
+  NRF52_PAN_74
   NRF_SD_BLE_API_VERSION=7
   S132
   SOFTDEVICE_PRESENT
-  BOND_ENABLE
-  MBEDTLS_CONFIG_FILE="nrf_crypto_mbedtls_config.h"
-  NRF_CRYPTO_MAX_INSTANCE_COUNT=1
-  # Debug handling
-  $<$<CONFIG:Debug>:
-  DEBUG
-  >
+  SWI_DISABLE0
+
+  WOLFSSL_USER_SETTINGS
 )
 
-# Compile options
-target_compile_options(
-  FMNADK PRIVATE
-  # Build type handling
-  $<$<CONFIG:Debug>:
-  -Og -ggdb
-  >
-  $<$<CONFIG:Release>:
-  -Os -g0
-  >
-  
-  # Compiler flags
-  -Wall -Wno-comment -Wno-array-bounds
+########################### Compile and linker options #######################
+set(MCPU_FLAGS 
+  -mthumb
   -mcpu=cortex-m4
-  -mthumb -mabi=aapcs
-  -mfloat-abi=hard -mfpu=fpv4-sp-d16
-  # keep every function in a separate section, this allows linker to discard unused ones
-  -ffunction-sections -fdata-sections -fno-strict-aliasing -fno-builtin -fshort-enums
+)
+
+set(VFP_FLAGS  
+  -mfloat-abi=hard
+  -mfpu=fpv4-sp-d16
+)
+
+set(CMAKE_COMMON_FLAGS
+  -g3
+  -ffunction-sections
+  -fdata-sections
+  -fno-strict-aliasing
+  -fdiagnostics-color=always
+  -fno-builtin
+  -fno-common
+  -fshort-enums
+  -Wall
+  -Wdouble-promotion
+  -Werror
+  -Wno-unused-parameter
+  -Wno-incompatible-pointer-types
+  -Wno-int-conversion
+  -Wno-stringop-overflow
+  -Wno-maybe-uninitialized
+)
+
+target_compile_options(
+  fmnadk PRIVATE
+  ${MCPU_FLAGS}
+  ${VFP_FLAGS}
+  ${CMAKE_COMMON_FLAGS}
 )
 
 # Link options
 target_link_options(
-  FMNADK PRIVATE
-  # Build type handling
-  $<$<CONFIG:Debug>:
-  -Og -ggdb
-  -DDEBUG
-  >
-  $<$<CONFIG:Release>:
-  -Os -g0
-  >
+  fmnadk PRIVATE
+
   # Linker flags
+  --specs=nano.specs
+  --specs=nosys.specs
+
+  # Linker symbols and options
+  -Wl,--defsym=__vfprintf=__vfprintf_long
+  -Wl,--defsym=__vfscanf=__vfscanf_int
+  -Wl,-X
+  -Wl,--omagic
+  -Wl,-eReset_Handler
+  -Wl,--fatal-warnings
+  -Wl,-EL
   -Wl,--gc-sections
-  -mcpu=cortex-m4
-  -mthumb -mabi=aapcs
-  -mfloat-abi=hard -mfpu=fpv4-sp-d16
-  # use newlib in nano version
-  --specs=nano.specs -lc -lnosys -lm
+  -Wl,-u_vectors
+  -Wl,--emit-relocs
+
+  -Wl,-print-memory-usage
 )
 
-###############################
+########################### Install #############################
 # Install
 install(
-  TARGETS FMNADK
+  TARGETS fmnadk
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

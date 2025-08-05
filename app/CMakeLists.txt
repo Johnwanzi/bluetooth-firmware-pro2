@@ -422,6 +422,7 @@ target_include_directories(
   ../drivers
   ../drivers/pmu
   ../drivers/light
+  ../fmnadk/adk/platform
 )
 
 execute_process(
