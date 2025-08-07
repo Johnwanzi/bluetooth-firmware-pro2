@@ -12,6 +12,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 message(STATUS "${CMAKE_PROJECT_NAME} Build Type: ${CMAKE_BUILD_TYPE}")
 
+set(SDK_BUILD_ROOT "${PROJECT_SOURCE_DIR}/..")
+
 ###############################
 # NRF SDK
 set(NRF_SDK_ROOT "${PROJECT_SOURCE_DIR}/../ble-firmware")
@@ -275,35 +277,32 @@ set(NRF_SDK_LINK
 
 set(
   OK_APP_SRC
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_adv.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_init.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_peer_manage.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_bat.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_dev_info.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_fido.c
-  ${PROJECT_SOURCE_DIR}/ok_ble/ok_ble_service_nus.c
-  ${PROJECT_SOURCE_DIR}/ok_communication/ok_cmd_protocol.c
-  ${PROJECT_SOURCE_DIR}/ok_communication/ok_cmd_protocol.c
-  ${PROJECT_SOURCE_DIR}/ok_communication/data_transmission.c
-  ${PROJECT_SOURCE_DIR}/ok_communication/ok_serial_communication.c
-  #${PROJECT_SOURCE_DIR}/ok_platform/device_config.c
-  ${PROJECT_SOURCE_DIR}/ok_platform/ecdsa.c
-  ${PROJECT_SOURCE_DIR}/ok_platform/ok_storage.c
-  ${PROJECT_SOURCE_DIR}/ok_platform/ok_device_config.c
-  ${PROJECT_SOURCE_DIR}/ok_flashled/flashled_manage.c
-  ${PROJECT_SOURCE_DIR}/ok_power_manage/ok_pwr_manage_ctrl.c
-  ${PROJECT_SOURCE_DIR}/ok_power_manage/power_manage.c
-  ${PROJECT_SOURCE_DIR}/ok_wdt/ok_watch_dog.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_adv.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_init.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_peer_manage.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_service_bat.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_service_dev_info.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_service_fido.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_service_nus.c
+  ${PROJECT_SOURCE_DIR}/communication/ok_cmd_protocol.c
+  ${PROJECT_SOURCE_DIR}/communication/data_transmission.c
+  ${PROJECT_SOURCE_DIR}/communication/ok_serial_communication.c
+  ${PROJECT_SOURCE_DIR}/hw/ok_storage.c
+  ${PROJECT_SOURCE_DIR}/hw/ok_device_config.c
+  ${PROJECT_SOURCE_DIR}/hw/flashled_manage.c
+  ${PROJECT_SOURCE_DIR}/hw/ok_pwr_manage_ctrl.c
+  ${PROJECT_SOURCE_DIR}/hw/power_manage.c
+  ${PROJECT_SOURCE_DIR}/hw/ok_watch_dog.c
+  ${SDK_BUILD_ROOT}/components/ecdsa/ecdsa.c
 )
 
 set(
   OK_APP_INC
-  ${PROJECT_SOURCE_DIR}/ok_ble
-  ${PROJECT_SOURCE_DIR}/ok_communication
-  ${PROJECT_SOURCE_DIR}/ok_flashled
-  ${PROJECT_SOURCE_DIR}/ok_power_manage
-  ${PROJECT_SOURCE_DIR}/ok_wdt
-  ${PROJECT_SOURCE_DIR}/ok_platform
+  ${PROJECT_SOURCE_DIR}/ble
+  ${PROJECT_SOURCE_DIR}/communication
+  ${PROJECT_SOURCE_DIR}/hw
+  ${SDK_BUILD_ROOT}/components
+  ${SDK_BUILD_ROOT}/components/ecdsa
 )
 
 ###############################
@@ -376,16 +375,16 @@ if(RTT_DEBUG_ENABLE)
   message(STATUS "Enable Rtt Debug")
   set(
     OK_TEST_SRC
-    ${PROJECT_SOURCE_DIR}/ok_platform/nvs/nvs.c
-    ${PROJECT_SOURCE_DIR}/ok_xdebug/rtt_misc_debug.c
-    ${PROJECT_SOURCE_DIR}/ok_xdebug/xdebug_flash_test.c
-    ${PROJECT_SOURCE_DIR}/ok_xdebug/xdebug_flash_nvs_test.c
+    ${SDK_BUILD_ROOT}/components/nvs/nvs.c
+    ${PROJECT_SOURCE_DIR}/xdebug/rtt_misc_debug.c
+    ${PROJECT_SOURCE_DIR}/xdebug/xdebug_flash_test.c
+    ${PROJECT_SOURCE_DIR}/xdebug/xdebug_flash_nvs_test.c
   )
 
   set(
     OK_TEST_INC
-    ${PROJECT_SOURCE_DIR}/ok_xdebug
-    ${PROJECT_SOURCE_DIR}/ok_platform/nvs
+    ${PROJECT_SOURCE_DIR}/xdebug
+    ${SDK_BUILD_ROOT}/components/nvs
   )
 
   target_sources(
@@ -509,7 +508,7 @@ target_link_libraries(
   ${CMAKE_PROJECT_NAME} PRIVATE
   ${NRF_SDK_LINK}
   MicroECC
-  ${CMAKE_CURRENT_SOURCE_DIR}/../fmnadk/lib/libfmnadk.a
+  ${SDK_BUILD_ROOT}/fmnadk/lib/libfmnadk.a
   m # math
 )
 
