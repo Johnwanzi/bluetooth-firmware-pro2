@@ -158,6 +158,9 @@ set(
 )
 
 ########################### Create FMNADK Static Library ###################
+# NRF SDK
+set(SDK_BUILD_ROOT "${PROJECT_SOURCE_DIR}/../")
+
 # Create Fmnadk Static Library
 
 add_library(
@@ -178,7 +181,8 @@ target_include_directories(
   fmnadk PRIVATE
   ${FMNA_INC}
   ${NRF_SDK_INC}
-  ${PROJECT_SOURCE_DIR}/../app
+  ${SDK_BUILD_ROOT}/app
+  ${SDK_BUILD_ROOT}/components/heap
 )
 
 ########################### Compile definitions #############################

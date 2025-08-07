@@ -9,18 +9,14 @@
 #ifndef fmna_malloc_platform_h
 #define fmna_malloc_platform_h
 
-#define USE_FMNA_DEBUG_MALLOC
+#include <stdint.h>
 
-#ifdef USE_FMNA_DEBUG_MALLOC
+#define FMNA_HEAP_SIZE 8192
+
+extern void fmna_malloc_platform_init(void);
 extern void fmna_free(void *ptr);
 extern void * fmna_malloc(size_t size);
 extern void * fmna_realloc(void *ptr, size_t size);
 extern void fmna_malloc_dump(void);
-
-#else
-#define fmna_free(ptr) free(ptr)
-#define fmna_malloc(size) malloc(size)
-#define fmna_realloc(ptr, size) realloc(ptr, size)
-#endif
 
 #endif /* fmna_malloc_platform_h */

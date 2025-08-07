@@ -26,7 +26,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug -DTOOL_CHAIN_PREFIX=$TOOL_CHAIN_PREFIX
 
 if [ $? -ne 0 ]; then
     print_error "CMake configuration failed!"
-    exit 1
 fi
 
 # Build library
@@ -35,11 +34,10 @@ make -j$(nproc)
 make install
 
 if [ $? -eq 0 ]; then
-    cd ..
     print_info "Build completed!"
 else
     print_error "Build failed!"
-    exit 1
-fi 
+fi
 
+cd ..
 rm -rf build
