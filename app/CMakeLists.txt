@@ -456,7 +456,7 @@ target_compile_definitions(
   NRF_APP_VERSION_ADDR=0x1D000
   NRF_CRYPTO_MAX_INSTANCE_COUNT=1
   # heap and stack
-  __HEAP_SIZE=8192
+  __HEAP_SIZE=0
   __STACK_SIZE=8192
 )
 

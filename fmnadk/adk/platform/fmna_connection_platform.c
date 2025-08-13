@@ -20,8 +20,7 @@
 #include "security_dispatcher.h"
 #include "security_manager.h"
 #include "gatt_cache_manager.h"
-
-static void fmna_connection_token_storage_init(void);
+#include "fmna_storage.h"
 
 ret_code_t fmna_connection_platform_disconnect(uint16_t conn_handle) {
     return sd_ble_gap_disconnect(conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
@@ -48,9 +47,6 @@ void fmna_connection_platform_gap_params_init(void) {
     
     ret_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(ret_code);
-    
-    fmna_connection_token_storage_init();
-
 }
 
 /// Function for handling a Connection Parameters error.
@@ -255,76 +251,13 @@ void fmna_connection_platform_get_serial_number(uint8_t * pSN, uint8_t length) {
     NRF_LOG_HEXDUMP_INFO(pSN, length);
 }
 
-// TODO remove / replace this with POR storage
-// Using fstorage as temp storage for Token
-// Please note this implementation is not 100% safe
-// There is a window after erase and before write completes
-// that there is no Token stored. A reset in this window could
-// cause the device to become unusable.
-#define SOFTWARE_AUTH_UUID_ADDR                0x79000
-#define CODE_PAGE_SIZE                         4096
-static void *m_p_update_token_data;
-static uint16_t m_update_token_size;
-static void fmna_connection_fstorage_evt_handler(nrf_fstorage_evt_t * p_evt);
-bool m_token_is_erasing = false;
 bool m_new_token_stored = false;
-NRF_FSTORAGE_DEF(nrf_fstorage_t m_token_fs) =
-{
-    .evt_handler = fmna_connection_fstorage_evt_handler,
-    .start_addr  = SOFTWARE_AUTH_UUID_ADDR,
-    .end_addr    = SOFTWARE_AUTH_UUID_ADDR + CODE_PAGE_SIZE
-};
-
-static void fmna_connection_token_storage_init(void) {
-    // Using fstorage as temp storage for Token
-    // TODO remove / replace this with POR storage
-    ret_code_t ret_code = nrf_fstorage_init(&m_token_fs, &nrf_fstorage_sd, NULL);
-    APP_ERROR_CHECK(ret_code);
-}
-
-static void fmna_connection_fstorage_evt_handler(nrf_fstorage_evt_t * p_evt)
-{
-    NRF_LOG_INFO("fmna_connection_fstorage_evt_handler %d %d", p_evt->id, p_evt->result);
-    switch (p_evt->id)
-    {
-        case NRF_FSTORAGE_EVT_ERASE_RESULT:
-            if (m_token_is_erasing) {
-                m_token_is_erasing = false;
-                if (p_evt->result != NRF_SUCCESS) {
-                    NRF_LOG_ERROR("Error erasing MFi Token");
-                    fmna_state_machine_dispatch_event(FMNA_SM_EVENT_FMNA_PAIRING_MFITOKEN);
-                }
-                else {
-                    ret_code_t ret_code = nrf_fstorage_write(&m_token_fs, SOFTWARE_AUTH_UUID_ADDR, m_p_update_token_data, m_update_token_size, NULL);
-                    APP_ERROR_CHECK(ret_code);
-                }
-                break;
-            }
-        case NRF_FSTORAGE_EVT_WRITE_RESULT:
-            if (p_evt->result != NRF_SUCCESS) {
-                NRF_LOG_ERROR("Error writing updated MFi Token");
-            }
-            else {
-                NRF_LOG_ERROR("MFi Token updated");
-                m_new_token_stored = true;
-            }
-            fmna_state_machine_dispatch_event(FMNA_SM_EVENT_FMNA_PAIRING_MFITOKEN);
-        default:
-            break;
-    }
-}
 
 void fmna_connection_update_mfi_token_storage(void *p_data, uint16_t data_size) {
-    ret_code_t ret_code;
-
-    //erase the MFi Token / UUID
-    m_p_update_token_data = p_data;
-    m_update_token_size = data_size;
-    
-    m_token_is_erasing = true;
-    m_new_token_stored = false;
-    ret_code = nrf_fstorage_erase(&m_token_fs, SOFTWARE_AUTH_UUID_ADDR, 1, NULL);
-    APP_ERROR_CHECK(ret_code);
+    NRF_LOG_INFO("Update MFi Token / UUID");
+    fmna_storage_write(FMNA_AUTH_TOKEN_UUID, p_data, data_size);
+    m_new_token_stored = true;
+    fmna_state_machine_dispatch_event(FMNA_SM_EVENT_FMNA_PAIRING_MFITOKEN);
 }
 
 bool fmna_connection_mfi_token_stored(void) {

@@ -41,11 +41,6 @@ typedef struct {
 
 tx_buffer_t tx_buffer;
 
-#if HARDCODED_PAIRING_ENABLED
-uint8_t keys_to_rotate[NUM_OF_KEYS][FMNA_PUBKEY_BLEN] = {0};
-uint32_t current_key_index = 0;
-#endif
-
 fmna_service_extended_packet_t fmna_service_current_extended_packet_tx = {};
 
 /// Ensure this GATT message has valid payload after fragmented flag header byte.

@@ -11,8 +11,6 @@
 
 #include "fmna_constants_platform.h"
 
-#define HARDCODED_PAIRING_ENABLED 0
-
 #define FMNA_COMPANY_IDENTIFIER                        0x004C                                      /**< Company identifier for Apple. as per www.bluetooth.org. */
 #define DEVICE_NAME                                   "Find My Accessory"
 

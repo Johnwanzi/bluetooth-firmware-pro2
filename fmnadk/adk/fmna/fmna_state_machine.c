@@ -112,9 +112,9 @@ static uint32_t fmna_connected_evt_timeout_handler                              
 static uint32_t fmna_connected_evt_key_rotate_handler                                (FMNA_SM_Event_t fmna_evt, void * p_context);
 static uint32_t fmna_connected_evt_sound_stop_handler                                (FMNA_SM_Event_t fmna_evt, void * p_context);
 static uint32_t fmna_fmna_pair_evt_fmna_pairing_finalize_handler                     (FMNA_SM_Event_t fmna_evt, void * p_context);
-#if !HARDCODED_PAIRING_ENABLED
+
 static uint32_t fmna_fmna_pair_evt_fmna_pairing_mfitoken_handler                     (FMNA_SM_Event_t fmna_evt, void * p_context);
-#endif // HARDCODED_PAIRING_ENABLED
+
 static uint32_t fmna_fmna_pair_evt_disconnected_handler                              (FMNA_SM_Event_t fmna_evt, void * p_context);
 static uint32_t fmna_fmna_pair_complete_evt_fmna_pairing_complete_handler            (FMNA_SM_Event_t fmna_evt, void * p_context);
 static uint32_t fmna_disconnecting_evt_nearby_handler                                (FMNA_SM_Event_t fmna_evt, void * p_context);
@@ -223,12 +223,8 @@ static const fmna_evt_handler_t fmna_sm_fmna_pair_evt_handlers[] = \
 {
     /* FIND_MY Event                           AppStateSuccess                    AppStateFailure            Handler  */
     
-#if HARDCODED_PAIRING_ENABLED
-    { FMNA_SM_EVENT_FMNA_PAIRING_FINALIZE,     FMNA_SM_FMNA_PAIR_COMPLETE,        FMNA_SM_NOCHANGE,            fmna_fmna_pair_evt_fmna_pairing_finalize_handler },
-#else
-    { FMNA_SM_EVENT_FMNA_PAIRING_FINALIZE,     FMNA_SM_NOCHANGE,                  FMNA_SM_NOCHANGE,            fmna_fmna_pair_evt_fmna_pairing_finalize_handler },
+    { FMNA_SM_EVENT_FMNA_PAIRING_FINALIZE,     FMNA_SM_NOCHANGE,                  FMNA_SM_NOCHANGE,          fmna_fmna_pair_evt_fmna_pairing_finalize_handler },
     { FMNA_SM_EVENT_FMNA_PAIRING_MFITOKEN,     FMNA_SM_FMNA_PAIR_COMPLETE,        FMNA_SM_NOCHANGE,          fmna_fmna_pair_evt_fmna_pairing_mfitoken_handler },
-#endif //HARDCODED_PAIRING_ENABLED
     { FMNA_SM_EVENT_DISCONNECTED,              FMNA_SM_DISCONNECTING,             FMNA_SM_NOCHANGE,          fmna_fmna_pair_evt_disconnected_handler},
     
 };
@@ -424,12 +420,7 @@ void fmna_rotate_key(void) {
     
     fmna_ret_code_t ret_code = fmna_crypto_roll_primary_key();
     FMNA_ERROR_CHECK(ret_code);
-    
-#if HARDCODED_PAIRING_ENABLED
-    current_key_index++;
-    memcpy((m_fmna_current_primary_key.public_key), &(keys_to_rotate[current_key_index % NUM_OF_KEYS]), FMNA_PUBKEY_BLEN);
-#endif //HARDCODED_PAIRING_ENABLED
-    
+
     FMNA_LOG_HEXDUMP_INFO(m_fmna_current_primary_key.public_key, 4);
     
     if (m_fmna_current_primary_key.index == cached_next_secondary_key_rotation_index) {
@@ -695,18 +686,6 @@ uint32_t fmna_nearby_evt_timeout_handler(FMNA_SM_Event_t fmna_evt, void * p_cont
 
 /// Notify iOS of keyroll, and re-initialize Nearby ADV with new key, if applicable.
 uint32_t fmna_connected_evt_key_rotate_handler(FMNA_SM_Event_t fmna_evt, void * p_context) {
-#if HARDCODED_PAIRING_ENABLED
-    // Broadcast this message to all valid centrals.
-    for (uint16_t conn_handle = 0; conn_handle < MAX_SUPPORTED_CONNECTIONS; conn_handle++) {
-        if (CONN_HANDLE_INVALID != m_fmna_active_connections[conn_handle].conn_handle) {
-            // Send indication to the specific central.
-            fmna_gatt_send_indication(conn_handle,
-                                      FMNA_SERVICE_OPCODE_KEYROLL_INDICATION,
-                                      &current_key_index,
-                                      sizeof(current_key_index));
-        }
-    }
-#else
     // Broadcast this message to all valid centrals.
     for (uint16_t conn_handle = 0; conn_handle < MAX_SUPPORTED_CONNECTIONS; conn_handle++) {
         if (CONN_HANDLE_INVALID != m_fmna_active_connections[conn_handle].conn_handle) {
@@ -717,7 +696,7 @@ uint32_t fmna_connected_evt_key_rotate_handler(FMNA_SM_Event_t fmna_evt, void * 
                                       sizeof(m_fmna_current_primary_key.index));
         }
     }
-#endif
+
     // rotate adv for multiple connections
     if (   fmna_connection_get_num_connections()
         && fmna_connection_get_num_connections() < fmna_connection_get_max_connections()) {
@@ -812,11 +791,7 @@ uint32_t fmna_unpaired_connecting_evt_fmna_pairing_initiate_handler(FMNA_SM_Even
     fmna_ret_code_t ret_code = FMNA_SUCCESS;
     uint32_t sm_ret = FMNA_SM_STATUS_SUCCESS;
     
-#if HARDCODED_PAIRING_ENABLED
-    memset(&m_fmna_send_pairing_data, 0xFF, sizeof(m_fmna_send_pairing_data));
-#else
     ret_code = fmna_crypto_generate_send_pairing_data_params();
-#endif //HARDCODED_PAIRING_ENABLED
     
     if (FMNA_SUCCESS != ret_code) {
         // Failure to generate send_pairing_data params, disconnect and end this pairing attempt.
@@ -839,28 +814,14 @@ uint32_t fmna_fmna_pair_evt_fmna_pairing_finalize_handler(FMNA_SM_Event_t fmna_e
     fmna_ret_code_t ret_code = FMNA_SUCCESS;
     uint32_t sm_ret = FMNA_SM_STATUS_SUCCESS;
     
-#if HARDCODED_PAIRING_ENABLED
-    memset(&m_fmna_send_pairing_status, 0xFF, sizeof(m_fmna_send_pairing_status));
-#else
     ret_code = fmna_crypto_finalize_pairing();
-#endif
     
     if (FMNA_SUCCESS != ret_code) {
         // Failure to finalize pairing, disconnect and end this pairing attempt.
         fmna_connection_disconnect_this();
         sm_ret = FMNA_SM_STATUS_CRYPTO_FAIL;
     }
-#if HARDCODED_PAIRING_ENABLED
-    else {
-        // Successfully finalized pairing, send response to central, and go into Connected state.
-        fmna_gatt_send_indication(fmna_gatt_get_most_recent_conn_handle(),
-                                  FMNA_SERVICE_OPCODE_SEND_PAIRING_STATUS,
-                                  &m_fmna_send_pairing_status,
-                                  sizeof(m_fmna_send_pairing_status));
-    }
-    return sm_ret;
-}
-#else //HARDCODED_PAIRING_ENABLED
+
     // For POR pairing wait to confirm the MFI token is in flash before sending the indication.
     
     return sm_ret;
@@ -885,7 +846,6 @@ uint32_t fmna_fmna_pair_evt_fmna_pairing_mfitoken_handler(FMNA_SM_Event_t fmna_e
     
     return sm_ret;
 }
-#endif // HARDCODED_PAIRING_ENABLED
 
 /// Handler for Owner connecting and encrypting the link successfully.
 /// @details     Disable Nearby->Separated timer, and non-owner connection timer.

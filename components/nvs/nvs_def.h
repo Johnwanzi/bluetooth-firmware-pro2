@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "ok_platform.h"
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
 
-#define NVS_LOG_DEBUG(...)    OK_LOG_INFO(__VA_ARGS__)
-#define NVS_LOG_INFO(...)     OK_LOG_INFO(__VA_ARGS__)
-#define NVS_LOG_WARN(...)     OK_LOG_WARN(__VA_ARGS__)
+#define NVS_LOG_DEBUG(...)    NRF_LOG_INFO(__VA_ARGS__)
+#define NVS_LOG_INFO(...)     NRF_LOG_INFO(__VA_ARGS__)
+#define NVS_LOG_WARN(...)     NRF_LOG_WARNING(__VA_ARGS__)
 
 #pragma pack(push)
 #pragma pack(1)

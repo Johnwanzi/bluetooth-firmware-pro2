@@ -18,6 +18,7 @@
 #include "fmna_peer_manager.h"
 #include "fmna_nfc.h"
 #include "fmna_crypto.h"
+#include "fmna_storage.h"
 
 // Flag to determine whether we need to wait for disconnections to send
 // set max connections response. 
@@ -125,6 +126,15 @@ static bool is_multiple_owners_connected(uint16_t current_conn_handle) {
 void fmna_connection_init(void) {
     // Set all connection info to 0xFF so that, initially, all connection handles are invalid.
     memset(m_fmna_active_connections, 0xFF, sizeof(m_fmna_active_connections));
+
+    // Get paired state from storage.
+    m_is_fmna_paired = 0;
+    fmna_storage_read(FMNA_PAIRED_STATE, &m_is_fmna_paired, sizeof(m_is_fmna_paired));
+    if (m_is_fmna_paired) {
+        FMNA_LOG_INFO("The Accessory is paired");
+    } else {
+        FMNA_LOG_INFO("The Accessory is unpaired");
+    }
 }
 
 bool fmna_connection_is_valid_connection(uint16_t conn_handle) {
@@ -377,12 +387,11 @@ uint8_t *fmna_connection_get_active_ltk(void) {
 
 void fmna_connection_set_is_fmna_paired(bool is_paired) {
     m_is_fmna_paired = is_paired;
+    fmna_storage_write(FMNA_PAIRED_STATE, &m_is_fmna_paired, sizeof(m_is_fmna_paired));
 }
 
 bool fmna_connection_is_fmna_paired(void) {
-    //TODO: Implement way to determine accessory paired status.
-    
-    return m_is_fmna_paired;
+    return m_is_fmna_paired ? true : false;
 }
 
 void fmna_connection_fmna_unpair(bool force_disconnect) {

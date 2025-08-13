@@ -14,10 +14,7 @@
 #include "fmna_gatt.h"
 #include "fmna_connection.h"
 #include "fmna_state_machine.h"
-
-#if HARDCODED_PAIRING_ENABLED
-#include "fmna_adv.h"
-#endif
+#include "fmna_storage.h"
 
 //MARK: RX Packet Definitions
 
@@ -106,9 +103,7 @@ void fmna_pairing_control_point_handle_rx(void) {
             memcpy(&m_fmna_finalize_pairing_data,
                    &(((finalize_pairing_packet_t *)pairing_rx_buffer.data)->finalize_pairing_data),
                    sizeof(m_fmna_finalize_pairing_data));
-#if HARDCODED_PAIRING_ENABLED
-            organize_pub_keys(((finalize_pairing_packet_t *)&pairing_rx_buffer)->finalize_pairing_data.e3);
-#endif
+            fmna_storage_write(FMNA_ICLOUD_ID, &m_fmna_finalize_pairing_data.icloud_id, ICLOUD_IDENTIFIER_BLEN);
             fmna_state_machine_dispatch_event(FMNA_SM_EVENT_FMNA_PAIRING_FINALIZE);
             break;
             

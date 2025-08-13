@@ -74,6 +74,13 @@ set(
   ${PROJECT_SOURCE_DIR}/adk/crypto/wolfssl/wolfcrypt/src/port/nrf51.c
 )
 
+# App source files
+set(
+  FMNA_APP_SRC
+  ${PROJECT_SOURCE_DIR}/fmna_app.c
+  ${PROJECT_SOURCE_DIR}/fmna_storage.c
+)
+
 # Include directories
 set(
   FMNA_INC
@@ -168,6 +175,7 @@ add_library(
   ${FMNA_CORE_SRC}
   ${FMNA_PLATFORM_SRC}
   ${WOLFSSL_SRC}
+  ${FMNA_APP_SRC}
 )
 
 # Include directories
@@ -183,6 +191,7 @@ target_include_directories(
   ${NRF_SDK_INC}
   ${SDK_BUILD_ROOT}/app
   ${SDK_BUILD_ROOT}/components/heap
+  ${SDK_BUILD_ROOT}/components/nvs
 )
 
 ########################### Compile definitions #############################

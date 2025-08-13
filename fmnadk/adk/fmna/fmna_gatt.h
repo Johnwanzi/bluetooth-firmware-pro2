@@ -146,11 +146,6 @@ typedef struct {
 
 extern fmna_service_extended_packet_t fmna_service_current_extended_packet_tx;
 
-#if HARDCODED_PAIRING_ENABLED
-extern uint32_t current_key_index;
-extern uint8_t keys_to_rotate[NUM_OF_KEYS][FMNA_PUBKEY_BLEN];
-#endif
-
 typedef struct {
     FMNA_Service_Opcode_t opcode;
 } __attribute__((packed)) generic_control_point_packet_t;

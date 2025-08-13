@@ -91,17 +91,6 @@ static uint8_t overwrite_bd_addr(uint8_t current_pubkey[FMNA_PUBKEY_BLEN]) {
     return ((current_pubkey[0] & FMNA_ADV_ADDR_TYPE_MASK) >> FMNA_ADV_OPT_ADDR_TYPE_SHIFT);
 }
 
-#if HARDCODED_PAIRING_ENABLED
-/// HARDCODED PAIRING FUNCTION: Separates hardcoded keys.
-/// @param[in]   keys        Keys to separate and rotate through.
-void organize_pub_keys(uint8_t *keys) {
-    current_key_index = 0;
-    for(uint8_t i = 0; i < NUM_OF_KEYS; i++){
-        memcpy(keys_to_rotate[i], &(keys[i * FMNA_PUBKEY_BLEN]), FMNA_PUBKEY_BLEN);
-    }
-}
-#endif
-
 static uint8_t get_fmna_status_flags_batt_bitfield(void) {
     uint8_t bat_level = fmna_battery_platform_get_battery_level();
     

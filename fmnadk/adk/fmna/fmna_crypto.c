@@ -15,11 +15,8 @@
 #include "fmna_nfc.h"
 #include "fmna_malloc_platform.h"
 #include "fmna_version.h"
-
-#ifdef GENERATE_RANDOM_SERIAL_NUMBER
-//TODO: remove this - random UUID
-#include "nrf_drv_rng.h"
-#endif
+#include "fm-crypto.h"
+#include "fmna_storage.h"
 
 fmna_send_pairing_data_t        m_fmna_send_pairing_data                                                     = {0};
 fmna_initiate_pairing_data_t    m_fmna_initiate_pairing_data                                                 = {0};
@@ -28,17 +25,6 @@ fmna_send_pairing_status_t      m_fmna_send_pairing_status                      
 uint8_t                         m_fmna_encrypted_serial_number_payload[ENCRYPTED_SERIAL_NUMBER_PAYLOAD_BLEN] = {0};
 
 static uint8_t m_serial_number[SERIAL_NUMBER_RAW_BLEN];
-#ifdef GENERATE_RANDOM_SERIAL_NUMBER
-static uint8_t m_serial_number_random_map[SERIAL_NUMBER_RAW_BLEN];
-#endif
-
-#if !HARDCODED_PAIRING_ENABLED
-#include "fm-crypto.h"
-
-//TODO: Replace this with POR persistent storage solution
-// For now, store software auth token and UUID in 0x79000 in Nordic flash, straight read.
-#define SOFTWARE_AUTH_UUID_ADDR                0x79000
-#define SOFTWARE_AUTH_TOKEN_ADDR               SOFTWARE_AUTH_UUID_ADDR + SOFTWARE_AUTH_UUID_BLEN
 
 typedef struct {
     uint8_t  serial_number[SERIAL_NUMBER_RAW_BLEN];
@@ -219,52 +205,42 @@ static fmna_ret_code_t roll_sk(uint8_t current_sk[SK_BLEN]) {
     
     return FMNA_SUCCESS;
 }
-#endif // HARDCODED_PAIRING_ENABLED
-
-#ifdef GENERATE_RANDOM_SERIAL_NUMBER
-/** @brief Function for getting vector of random numbers.
- *
- * @param[out] p_buff       Pointer to unit8_t buffer for storing the bytes.
- * @param[in]  length       Number of bytes to take from pool and place in p_buff.
- *
- * @retval     Number of bytes actually placed in p_buff.
- */
-static uint8_t random_vector_generate(uint8_t * p_buff, uint8_t size)
-{
-    uint32_t err_code;
-    uint8_t  available;
-
-    nrf_drv_rng_bytes_available(&available);
-    uint8_t length = MIN(size, available);
-
-    err_code = nrf_drv_rng_rand(p_buff, length);
-    FMNA_ERROR_CHECK(err_code);
-
-    return length;
-}
-
-static void generate_random_serial_number(void) {
-    static const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789";
-    
-    random_vector_generate((uint8_t *)&m_serial_number_random_map, SERIAL_NUMBER_RAW_BLEN);
-    
-    for (uint8_t i = 0; i < SERIAL_NUMBER_RAW_BLEN; i++) {
-        m_serial_number[i] = charset[m_serial_number_random_map[i] % sizeof(charset)];
-    }
-    
-    FMNA_LOG_INFO("Serial Number:");
-    FMNA_LOG_HEXDUMP_INFO(m_serial_number, 16);
-}
-#endif
 
 uint8_t *fmna_crypto_get_serial_number_raw(void) {
     return m_serial_number;
 }
 
+static void fmna_crypto_keys_load(void) {
+    if (fmna_connection_is_fmna_paired()) {
+        FMNA_LOG_INFO("FMNA Crypoto Information Load...");
+        uint16_t len = P_BLEN;
+        fmna_storage_read(FMNA_PUBLIC_KEY_P, &m_p, len);
+
+        len = SK_BLEN;
+        fmna_storage_read(FMNA_INITIAL_PRIMARY_SK, &m_current_primary_sk, len);
+
+        len = SK_BLEN;
+        fmna_storage_read(FMNA_INITIAL_SECONDARY_SK, &m_current_secondary_sk, len);
+
+        len = SERVER_SHARED_SECRET_BLEN;
+        fmna_storage_read(FMNA_SERVER_SHARED_KEY, &m_server_shared_secret, len);
+
+        len = sizeof(m_fmna_current_primary_key);
+        fmna_storage_read(FMNA_CURRENT_PRIMARY_SK, &m_fmna_current_primary_key, len);
+
+        len = sizeof(m_fmna_current_secondary_key);
+        fmna_storage_read(FMNA_CURRENT_SECONDARY_SK, &m_fmna_current_secondary_key, len);
+
+        len = ICLOUD_IDENTIFIER_BLEN;
+        fmna_storage_read(FMNA_ICLOUD_ID, &m_fmna_finalize_pairing_data.icloud_id, len);
+    }
+}
+
 void fmna_crypto_init(void) {
 
-#if !HARDCODED_PAIRING_ENABLED
     FMNA_LOG_INFO("fmna_crypto_init");
+
+    fmna_crypto_keys_load();
     
     int ret = fm_crypto_ckg_init(&m_fm_crypto_ckg_ctx);
     
@@ -273,34 +249,23 @@ void fmna_crypto_init(void) {
         FMNA_ERROR_CHECK(FMNA_ERROR_INTERNAL);
     }
     
-    //TODO: Read software auth token, UUID, serial number from accessory factory registers/ flash.
-
-    //TODO: Replace this with POR read.
-    memcpy(m_mfi_struct.m_software_auth_token, (const void *)SOFTWARE_AUTH_TOKEN_ADDR, SOFTWARE_AUTH_TOKEN_BLEN);
+    // Read software auth token, UUID, serial number from accessory factory registers/ flash.
+    if(fmna_storage_read(FMNA_AUTH_TOKEN_UUID, &m_mfi_struct, sizeof(m_mfi_struct)) <= 0) {
+        
+        memcpy(m_mfi_struct.m_software_auth_token, (const void *)SOFTWARE_AUTH_TOKEN_ADDR, SOFTWARE_AUTH_TOKEN_BLEN);
+        memcpy(m_mfi_struct.m_software_auth_uuid, (const void *)SOFTWARE_AUTH_UUID_ADDR, SOFTWARE_AUTH_UUID_BLEN);
+    }
+    
     FMNA_LOG_INFO("m_software_auth_token preview");
     FMNA_LOG_HEXDUMP_INFO(m_mfi_struct.m_software_auth_token, 16);
     
-    //TODO: Replace this with POR read.
-    memcpy(m_mfi_struct.m_software_auth_uuid, (const void *)SOFTWARE_AUTH_UUID_ADDR, SOFTWARE_AUTH_UUID_BLEN);
     FMNA_LOG_INFO("m_software_auth_uuid");
     FMNA_LOG_HEXDUMP_INFO(m_mfi_struct.m_software_auth_uuid, 16);
-#endif // HARDCODED_PAIRING_ENABLED
     
-#ifdef GENERATE_RANDOM_SERIAL_NUMBER
-    nrfx_rng_config_t config = NRFX_RNG_DEFAULT_CONFIG;
-    fmna_ret_code_t ret_code = nrf_drv_rng_init(&config);
-    if (FMNA_SUCCESS != ret_code) {
-        FMNA_LOG_WARNING("nrf_drv_rng_init err 0x%x");
-    }
-    
-    generate_random_serial_number();
-#else
     fmna_connection_platform_get_serial_number(m_serial_number, SERIAL_NUMBER_RAW_BLEN);
-#endif
 }
 
 fmna_ret_code_t fmna_crypto_generate_send_pairing_data_params(void) {
-#if !HARDCODED_PAIRING_ENABLED
     
     // Generate C1, SeedK1, and E2.
     int ret = fm_crypto_ckg_gen_c1(&m_fm_crypto_ckg_ctx, m_fmna_send_pairing_data.c1);
@@ -330,14 +295,11 @@ fmna_ret_code_t fmna_crypto_generate_send_pairing_data_params(void) {
         return FMNA_ERROR_INTERNAL;
     }
     FMNA_LOG_INFO("E2, len %lu", e2_blen);
-#endif //HARCODED_PAIRING_ENABLED
 
     return FMNA_SUCCESS;
 }
 
 fmna_ret_code_t fmna_crypto_finalize_pairing(void) {
-    
-#if !HARDCODED_PAIRING_ENABLED
     // Validate S2, decrypt E3, generate C3, generate E4, and send response.
     
     int ret = fm_crypto_derive_server_shared_secret(m_fmna_finalize_pairing_data.seeds, m_seedk1, m_server_shared_secret);
@@ -345,6 +307,8 @@ fmna_ret_code_t fmna_crypto_finalize_pairing(void) {
         FMNA_LOG_ERROR("fm_crypto_derive_server_shared_secret err %d", ret);
         return FMNA_ERROR_INTERNAL;
     }
+
+    fmna_storage_write(FMNA_SERVER_SHARED_KEY, &m_server_shared_secret, SERVER_SHARED_SECRET_BLEN);
     
     populate_s2_verification_msg();
     FMNA_LOG_INFO("S2 verification msg len %d", sizeof(m_key_verif_encr_msg.s2_verification_msg));
@@ -355,9 +319,7 @@ fmna_ret_code_t fmna_crypto_finalize_pairing(void) {
                               (const uint8_t *)(&m_key_verif_encr_msg.s2_verification_msg));
     if (FM_CRYPTO_STATUS_SUCCESS != ret) {
         FMNA_LOG_ERROR("fm_crypto_verify_s2 err %d", ret);
-        
-        //TODO: Do not bypass failure check for signature.
-        //return FMNA_ERROR_INTERNAL;
+        return FMNA_ERROR_INTERNAL;
     }
     
     uint32_t e3_decrypt_plaintext_blen = SOFTWARE_AUTH_TOKEN_BLEN;
@@ -400,14 +362,11 @@ fmna_ret_code_t fmna_crypto_finalize_pairing(void) {
     //new MFi token should be stored before pairing complete is sent
     //Attempt to save MFi Token
     fmna_connection_update_mfi_token_storage(&m_mfi_struct, sizeof(m_mfi_struct));
-
-#endif // HARDCODED_PAIRING_ENABLED
     
     return FMNA_SUCCESS;
 }
 
 fmna_ret_code_t fmna_crypto_pairing_complete(void) {
-#if !HARDCODED_PAIRING_ENABLED
     int ret = fm_crypto_ckg_finish(&m_fm_crypto_ckg_ctx,
                                    m_p,
                                    m_current_primary_sk,
@@ -419,39 +378,30 @@ fmna_ret_code_t fmna_crypto_pairing_complete(void) {
         
     FMNA_LOG_INFO("P:");
     FMNA_LOG_HEXDUMP_INFO(m_p, P_BLEN);
+    fmna_storage_write(FMNA_PUBLIC_KEY_P, &m_p, P_BLEN);
     
     FMNA_LOG_INFO("Primary SKN:");
     FMNA_LOG_HEXDUMP_INFO(&m_current_primary_sk, SK_BLEN);
+    fmna_storage_write(FMNA_INITIAL_PRIMARY_SK, &m_current_primary_sk, SK_BLEN);
     
     FMNA_LOG_INFO("Secondary SKN:");
     FMNA_LOG_HEXDUMP_INFO(&m_current_secondary_sk, SK_BLEN);
+    fmna_storage_write(FMNA_INITIAL_SECONDARY_SK, &m_current_secondary_sk, SK_BLEN);
     
     fm_crypto_ckg_free(&m_fm_crypto_ckg_ctx);
-    
-#endif //HARDCODED_PAIRING_ENABLED
     
     return FMNA_SUCCESS;
 }
 
 fmna_ret_code_t fmna_crypto_roll_primary_sk(void) {
-#if !HARDCODED_PAIRING_ENABLED
     return roll_sk(m_current_primary_sk);
-#else
-    return FMNA_SUCCESS;
-#endif
 }
 
 fmna_ret_code_t fmna_crypto_roll_secondary_sk(void) {
-#if !HARDCODED_PAIRING_ENABLED
     return roll_sk(m_current_secondary_sk);
-#else
-    return FMNA_SUCCESS;
-#endif
 }
 
 fmna_ret_code_t fmna_crypto_roll_primary_key(void) {
-#if !HARDCODED_PAIRING_ENABLED
-    
     // SK(i) -> SK(i+1)
     fmna_ret_code_t fmna_ret_code = fmna_crypto_roll_primary_sk();
     if (fmna_ret_code != FMNA_SUCCESS) {
@@ -481,19 +431,15 @@ fmna_ret_code_t fmna_crypto_roll_primary_key(void) {
     FMNA_LOG_INFO("Curr LTK:");
     FMNA_LOG_HEXDUMP_INFO(m_fmna_current_primary_key.ltk, GAP_SEC_KEY_LEN);
     fmna_connection_set_active_ltk(m_fmna_current_primary_key.ltk);
+    fmna_storage_write(FMNA_INITIAL_PRIMARY_SK, &m_current_primary_sk, SK_BLEN);
+    fmna_storage_write(FMNA_CURRENT_PRIMARY_SK, &m_fmna_current_primary_key, sizeof(m_fmna_current_primary_key));
     
     fmna_malloc_dump();
     
     return FMNA_SUCCESS;
-    
-#else // HARDCODED_PAIRING_ENABLED
-    
-    return FMNA_SUCCESS;
-#endif // HARDCODED_PAIRING_ENABLED
 }
 
 fmna_ret_code_t fmna_crypto_roll_secondary_key(void) {
-#if !HARDCODED_PAIRING_ENABLED
     // SK(i) -> SK(i+1)
     fmna_ret_code_t fmna_ret_code = fmna_crypto_roll_secondary_sk();
     if (fmna_ret_code != FMNA_SUCCESS) {
@@ -512,17 +458,13 @@ fmna_ret_code_t fmna_crypto_roll_secondary_key(void) {
 
     FMNA_LOG_INFO("Curr Secondary Key (index = 0x%x):", m_fmna_current_secondary_key.index);
     FMNA_LOG_HEXDUMP_INFO(m_fmna_current_secondary_key.public_key, FMNA_PUBKEY_BLEN);
+    fmna_storage_write(FMNA_INITIAL_SECONDARY_SK, &m_current_secondary_sk, SK_BLEN);
+    fmna_storage_write(FMNA_CURRENT_SECONDARY_SK, &m_fmna_current_secondary_key, sizeof(m_fmna_current_secondary_key));
     
     return FMNA_SUCCESS;
-    
-#else //HARDCODED_PAIRING_ENABLED
-    
-    return FMNA_SUCCESS;
-#endif // HARDCODED_PAIRING_ENABLED
 }
 
 fmna_ret_code_t fmna_crypto_generate_serial_number_response(FMNA_Serial_Number_Query_Type_t type) {
-#if !HARDCODED_PAIRING_ENABLED
     int ret;
     
     // Clear the encrypted serial number initially in case of error.
@@ -573,12 +515,11 @@ fmna_ret_code_t fmna_crypto_generate_serial_number_response(FMNA_Serial_Number_Q
         memset(m_fmna_encrypted_serial_number_payload, 0, ENCRYPTED_SERIAL_NUMBER_PAYLOAD_BLEN);
         return FMNA_ERROR_INTERNAL;
     }
-#endif //HARDCODED_PAIRING_ENABLED
+
     return FMNA_SUCCESS;
 }
 
 void fmna_crypto_unpair(void) {
-#if !HARDCODED_PAIRING_ENABLED
     FMNA_LOG_INFO("fmna_crypto_unpair");
     
     // Initialize new CKG context on unpair in preparation for new pairing.
@@ -588,18 +529,13 @@ void fmna_crypto_unpair(void) {
         FMNA_LOG_ERROR("fm_crypto_ckg_init err %d", ret);
         FMNA_ERROR_CHECK(FMNA_ERROR_INTERNAL);
     }
-#endif // HARDCODED_PAIRING_ENABLED
 }
 
 void fmna_log_mfi_token_help(void) {
-#if !HARDCODED_PAIRING_ENABLED
     fmna_connection_platform_log_token_help(m_mfi_struct.m_software_auth_token, SOFTWARE_AUTH_TOKEN_BLEN, m_mfi_struct.m_software_auth_uuid, SOFTWARE_AUTH_UUID_BLEN);
-#endif // HARDCODED_PAIRING_ENABLED
 }
 
 void fmna_log_mfi_token(void) {
-#if !HARDCODED_PAIRING_ENABLED
     fmna_connection_platform_log_token(m_mfi_struct.m_software_auth_token, SOFTWARE_AUTH_TOKEN_BLEN, 0);
-#endif // HARDCODED_PAIRING_ENABLED
 }
 

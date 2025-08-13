@@ -305,7 +305,7 @@ static int nvs_flash_erase_sector(struct nvs_fs *fs, uint32_t addr)
     offset = fs->offset;
     offset += fs->sector_size * (addr >> ADDR_SECT_SHIFT);
 
-    OK_LOG_INFO("Erasing flash at %lx, len %d", (long int)offset, fs->sector_size);
+    NVS_LOG_INFO("Erasing flash at %lx, len %d", (long int)offset, fs->sector_size);
 
 #ifdef CONFIG_NVS_LOOKUP_CACHE
     nvs_lookup_cache_invalidate(fs, addr >> ADDR_SECT_SHIFT);
@@ -443,7 +443,7 @@ static int nvs_recover_last_ate(struct nvs_fs *fs, uint32_t *addr)
     size_t         ate_size;
     int            rc;
 
-    OK_LOG_INFO("Recovering last ate from sector %d", (*addr >> ADDR_SECT_SHIFT));
+    NVS_LOG_INFO("Recovering last ate from sector %d", (*addr >> ADDR_SECT_SHIFT));
 
     ate_size = nvs_al_size(fs, sizeof(struct nvs_ate));
 
@@ -566,7 +566,7 @@ static int nvs_add_gc_done_ate(struct nvs_fs *fs)
 {
     struct nvs_ate gc_done_ate;
 
-    OK_LOG_INFO("Adding gc done ate at %x", fs->ate_wra & ADDR_OFFS_MASK);
+    NVS_LOG_INFO("Adding gc done ate at %x", fs->ate_wra & ADDR_OFFS_MASK);
     gc_done_ate.id     = 0xffff;
     gc_done_ate.len    = 0U;
     gc_done_ate.offset = (uint16_t)(fs->data_wra & ADDR_OFFS_MASK);
@@ -657,7 +657,7 @@ static int nvs_gc(struct nvs_fs *fs)
          */
         if ((wlk_prev_addr == gc_prev_addr) && gc_ate.len) {
             /* copy needed */
-            OK_LOG_INFO("Moving %d, len %d", gc_ate.id, gc_ate.len);
+            NVS_LOG_INFO("Moving %d, len %d", gc_ate.id, gc_ate.len);
 
             data_addr = (gc_prev_addr & ADDR_SECT_MASK);
             data_addr += gc_ate.offset;
@@ -841,13 +841,13 @@ static int nvs_startup(struct nvs_fs *fs)
 
         if (gc_done_marker) {
             /* erase the next sector */
-            OK_LOG_INFO("GC Done marker found");
+            NVS_LOG_INFO("GC Done marker found");
             addr = fs->ate_wra & ADDR_SECT_MASK;
             nvs_sector_advance(fs, &addr);
             rc = nvs_flash_erase_sector(fs, addr);
             goto end;
         }
-        OK_LOG_INFO("No GC Done marker found: restarting gc");
+        NVS_LOG_INFO("No GC Done marker found: restarting gc");
         rc = nvs_flash_erase_sector(fs, fs->ate_wra);
         if (rc) {
             goto end;
@@ -924,7 +924,7 @@ int nvs_clear(struct nvs_fs *fs)
     uint32_t addr;
 
     if (!fs->ready) {
-        OK_LOG_WARN("NVS not initialized");
+        NVS_LOG_WARN("NVS not initialized");
         return -1;
     }
 
@@ -959,7 +959,7 @@ int nvs_mount(struct nvs_fs *fs)
 
     /* check that the write block size is supported */
     if (write_block_size > NVS_BLOCK_SIZE || write_block_size == 0) {
-        OK_LOG_WARN("Unsupported write block size");
+        NVS_LOG_WARN("Unsupported write block size");
         return -EINVAL;
     }
 
@@ -968,13 +968,13 @@ int nvs_mount(struct nvs_fs *fs)
 
     /* check that sector size is a multiple of pagesize */
     if (!fs->sector_size || fs->sector_size % fs->flash_dev->page_size) {
-        OK_LOG_WARN("Invalid sector size");
+        NVS_LOG_WARN("Invalid sector size");
         return -EINVAL;
     }
 
     /* check the number of sectors, it should be at least 2 */
     if (fs->sector_count < 2) {
-        OK_LOG_WARN("Configuration error - sector count");
+        NVS_LOG_WARN("Configuration error - sector count");
         return -EINVAL;
     }
 
@@ -990,9 +990,9 @@ int nvs_mount(struct nvs_fs *fs)
     /* nvs is ready for use */
     fs->ready = true;
 
-    OK_LOG_INFO("%d Sectors of %d bytes", fs->sector_count, fs->sector_size);
-    OK_LOG_INFO("alloc wra: %d, %x", (fs->ate_wra >> ADDR_SECT_SHIFT), (fs->ate_wra & ADDR_OFFS_MASK));
-    OK_LOG_INFO("data wra: %d, %x", (fs->data_wra >> ADDR_SECT_SHIFT), (fs->data_wra & ADDR_OFFS_MASK));
+    NVS_LOG_INFO("%d Sectors of %d bytes", fs->sector_count, fs->sector_size);
+    NVS_LOG_INFO("alloc wra: %d, %x", (fs->ate_wra >> ADDR_SECT_SHIFT), (fs->ate_wra & ADDR_OFFS_MASK));
+    NVS_LOG_INFO("data wra: %d, %x", (fs->data_wra >> ADDR_SECT_SHIFT), (fs->data_wra & ADDR_OFFS_MASK));
 
     return 0;
 }
@@ -1007,7 +1007,7 @@ int nvs_write(struct nvs_fs *fs, uint16_t id, const void *data, size_t len)
     bool           prev_found     = false;
 
     if (!fs->ready) {
-        OK_LOG_WARN("NVS not initialized");
+        NVS_LOG_WARN("NVS not initialized");
         return -1;
     }
 
@@ -1144,7 +1144,7 @@ int nvs_read_hist(struct nvs_fs *fs, uint16_t id, void *data, size_t len, uint16
     size_t         ate_size;
 
     if (!fs->ready) {
-        OK_LOG_WARN("NVS not initialized");
+        NVS_LOG_WARN("NVS not initialized");
         return -1;
     }
 
@@ -1216,7 +1216,7 @@ int nvs_calc_free_space(struct nvs_fs *fs)
     size_t         ate_size, free_space;
 
     if (!fs->ready) {
-        OK_LOG_WARN("NVS not initialized");
+        NVS_LOG_WARN("NVS not initialized");
         return -1;
     }
 

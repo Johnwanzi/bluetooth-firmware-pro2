@@ -81,10 +81,4 @@ void fmna_adv_init_separated(uint8_t separated_pubkey[FMNA_PUBKEY_BLEN], uint8_t
 /// @param[in]  pubkey      Current primary key.
 void fmna_adv_init_nearby(uint8_t pubkey[FMNA_PUBKEY_BLEN]);
 
-#if HARDCODED_PAIRING_ENABLED
-/// HARDCODED PAIRING FUNCTION: Separates hardcoded keys.
-/// @param[in]   keys        Keys to separate and rotate through.
-void organize_pub_keys(uint8_t *keys);
-#endif
-
 #endif /* fmna_adv_h */
