@@ -160,6 +160,7 @@ set(
   ${NRF_SDK_ROOT}/components/ble/ble_services/ble_lbs/ble_lbs.c
   ${NRF_SDK_ROOT}/components/ble/ble_services/ble_nus/ble_nus.c
   ${NRF_SDK_ROOT}/components/ble/ble_services/ble_fido/ble_fido.c
+  ${NRF_SDK_ROOT}/components/ble/ble_services/ble_tps/ble_tps.c
   ${NRF_SDK_ROOT}/components/ble/common/ble_advdata.c
   ${NRF_SDK_ROOT}/components/ble/common/ble_conn_params.c
   ${NRF_SDK_ROOT}/components/ble/common/ble_conn_state.c
@@ -278,6 +279,7 @@ set(NRF_SDK_LINK
 set(
   OK_APP_SRC
   ${PROJECT_SOURCE_DIR}/ble/ok_ble_adv.c
+  ${PROJECT_SOURCE_DIR}/ble/ok_ble_adv_manage.c
   ${PROJECT_SOURCE_DIR}/ble/ok_ble_init.c
   ${PROJECT_SOURCE_DIR}/ble/ok_ble_peer_manage.c
   ${PROJECT_SOURCE_DIR}/ble/ok_ble_service_bat.c

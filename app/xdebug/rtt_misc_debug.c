@@ -62,6 +62,10 @@ void ok_rtt_detect_input(void)
             xdebug_nvs_test();
         } break;
 
+        case 'z': {
+            OK_LOG_INFO("Hello World for test!");
+        } break;
+
         default:
             break;
     }
