@@ -1182,6 +1182,13 @@ uint32_t fmna_state_machine_get_non_owner_connection_timeout(void) {
     return m_fmna_non_owner_connection_timeout;
 }
 
+void fmna_state_machine_clear_keys(void) {
+    memset(&m_fmna_current_primary_key, 0, sizeof(m_fmna_current_primary_key));
+    memset(&m_fmna_current_separated_primary_key, 0, sizeof(m_fmna_current_separated_primary_key));
+    memset(&m_fmna_current_secondary_key, 0, sizeof(m_fmna_current_secondary_key));
+    m_current_separated_primary_key_index = 0;
+}
+
 #ifdef DEBUG
 void fmna_state_machine_set_key_rotation_timeout_ms(uint32_t key_rotation_timeout_ms) {
     FMNA_LOG_INFO("Setting key rotation timeout to %dms", key_rotation_timeout_ms);
@@ -1201,13 +1208,6 @@ void fmna_state_machine_set_key_rotation_timeout_ms(uint32_t key_rotation_timeou
 
 void fmna_state_machine_set_separated_ut_timeout_seconds(uint32_t separated_ut_timeout_seconds) {
     m_separated_ut_timeout_ms = SEC_TO_MSEC(separated_ut_timeout_seconds);
-}
-
-void fmna_state_machine_clear_keys(void) {
-    memset(&m_fmna_current_primary_key, 0, sizeof(m_fmna_current_primary_key));
-    memset(&m_fmna_current_separated_primary_key, 0, sizeof(m_fmna_current_separated_primary_key));
-    memset(&m_fmna_current_secondary_key, 0, sizeof(m_fmna_current_secondary_key));
-    m_current_separated_primary_key_index = 0;
 }
 
 #endif

@@ -181,6 +181,7 @@ set(
   ${NRF_SDK_ROOT}/components/ble/peer_manager/pm_buffer.c
   ${NRF_SDK_ROOT}/components/ble/peer_manager/security_dispatcher.c
   ${NRF_SDK_ROOT}/components/ble/peer_manager/security_manager.c
+  ${NRF_SDK_ROOT}/components/boards/boards.c
   ${NRF_SDK_ROOT}/components/libraries/atomic/nrf_atomic.c
   ${NRF_SDK_ROOT}/components/libraries/atomic_fifo/nrf_atfifo.c
   ${NRF_SDK_ROOT}/components/libraries/atomic_flags/nrf_atflags.c
@@ -378,6 +379,7 @@ if(RTT_DEBUG_ENABLE)
   set(
     OK_TEST_SRC
     ${SDK_BUILD_ROOT}/components/nvs/nvs.c
+    ${SDK_BUILD_ROOT}/components/heap/sys_heap.c
     ${PROJECT_SOURCE_DIR}/xdebug/rtt_misc_debug.c
     ${PROJECT_SOURCE_DIR}/xdebug/xdebug_flash_test.c
     ${PROJECT_SOURCE_DIR}/xdebug/xdebug_flash_nvs_test.c
@@ -387,6 +389,7 @@ if(RTT_DEBUG_ENABLE)
     OK_TEST_INC
     ${PROJECT_SOURCE_DIR}/xdebug
     ${SDK_BUILD_ROOT}/components/nvs
+    ${SDK_BUILD_ROOT}/components/heap
   )
 
   target_sources(
@@ -447,6 +450,7 @@ target_compile_definitions(
   FLOAT_ABI_HARD
   NRF52
   NRF52832_XXAA
+  BOARD_PCA10040
   NRF_SD_BLE_API_VERSION=7
   S132
   SOFTDEVICE_PRESENT

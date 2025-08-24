@@ -95,7 +95,8 @@ static void ble_adv_manage_timeout_handler(void *p_context)
     }
 
     // start the next advertising instance
-    if (m_ble_adv_manage.adv[adv_index].adv_alive && m_ble_adv_manage.adv[adv_index].conn_handle == BLE_CONN_HANDLE_INVALID) {
+    if (m_ble_adv_manage.adv[adv_index].adv_alive && m_ble_adv_manage.adv[adv_index].conn_handle == BLE_CONN_HANDLE_INVALID
+        && m_ble_adv_manage.adv[adv_index].adv_data.adv_data.len > 0) {
         ble_adv_manage_start(adv_index);
         m_ble_adv_manage.adv_is_running = true;
     }

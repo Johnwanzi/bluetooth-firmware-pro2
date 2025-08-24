@@ -12,167 +12,196 @@
 #include "fmna_util.h"
 #include "fmna_adv.h"
 
-BLE_ADVERTISING_DEF(m_advertising);                               /**< Advertising module instance. */
 
-// Universally unique service identifier.
-static ble_uuid_t m_prox_adv_uuids[] = {
-    {FINDMY_UUID_SERVICE, BLE_UUID_TYPE_BLE}
-};
+#define FMNA_ADV_MODE_PIARING   0
+#define FMNA_ADV_MODE_NEARBY    1
+#define FMNA_ADV_MODE_SEPARATED 2
 
-void fmna_adv_platform_get_default_bt_addr(uint8_t default_bt_addr[FMNA_BLE_MAC_ADDR_BLEN]) {
+static uint8_t m_fmna_current_mode                       = 0;
+static uint8_t m_fmna_adv[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
+
+void fmna_adv_platform_get_default_bt_addr(uint8_t default_bt_addr[FMNA_BLE_MAC_ADDR_BLEN])
+{
     // Read hardcoded address from factory register
     memcpy(default_bt_addr, (uint8_t *)NRF_FICR->DEVICEADDR, FMNA_BLE_MAC_ADDR_BLEN);
-    
+
     // Nordic SD sd_ble_gap_addr_set expects ble_gap_addr_t as LSB.
-    reverse_array(default_bt_addr, 0, FMNA_BLE_MAC_ADDR_BLEN-1);
+    reverse_array(default_bt_addr, 0, FMNA_BLE_MAC_ADDR_BLEN - 1);
 }
 
-void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC_ADDR_BLEN]) {
-    ret_code_t ret_code;
+void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC_ADDR_BLEN])
+{
+    ret_code_t     ret_code;
     ble_gap_addr_t bd_addr;
-    
+
     memcpy(bd_addr.addr, new_bt_mac, FMNA_BLE_MAC_ADDR_BLEN);
-    
+
     // Print the current public key 6 bytes Bluetooth Address
     NRF_LOG_INFO("BT MAC:");
     NRF_LOG_HEXDUMP_INFO(bd_addr.addr, 6);
-    
+
     // Nordic SD sd_ble_gap_addr_set expects ble_gap_addr_t as LSB.
-    reverse_array(bd_addr.addr, 0, FMNA_BLE_MAC_ADDR_BLEN-1);
-    
+    reverse_array(bd_addr.addr, 0, FMNA_BLE_MAC_ADDR_BLEN - 1);
+
     bd_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
-    
+
     ret_code = sd_ble_gap_addr_set(&bd_addr);
     APP_ERROR_CHECK(ret_code);
 }
 
-static void fmna_adv_start_adv(ble_adv_mode_t adv_mode) {
-    ret_code_t ret_code = ble_advertising_start(&m_advertising, adv_mode);
-    
-    if (ret_code != NRF_SUCCESS) {
-        NRF_LOG_INFO("error in advertising 0x%x", ret_code);
+void fmna_adv_platform_start_fast_adv(void)
+{
+    ble_adv_instance_t pair_adv_data = {0};
+
+    // Configure Advertising module params
+    pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+    pair_adv_data.adv_params.filter_policy   = BLE_GAP_ADV_FP_ANY;
+    pair_adv_data.adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
+
+    if (m_fmna_current_mode == FMNA_ADV_MODE_PIARING) {
+        pair_adv_data.adv_params.interval = fmna_pairing_adv_fast_intv;
+        pair_adv_data.adv_params.duration = fmna_pairing_adv_fast_duration;
+    } else if (m_fmna_current_mode == FMNA_ADV_MODE_NEARBY) {
+        pair_adv_data.adv_params.interval = fmna_nearby_adv_fast_intv;
+        pair_adv_data.adv_params.duration = fmna_nearby_adv_fast_duration;
+    } else if (m_fmna_current_mode == FMNA_ADV_MODE_SEPARATED) {
+        pair_adv_data.adv_params.interval = fmna_separated_adv_fast_intv;
+        pair_adv_data.adv_params.duration = fmna_separated_adv_fast_duration;
+    } else {
+        return;
     }
+
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_ADV_PARAMS, &pair_adv_data.adv_params);
 }
 
-void fmna_adv_platform_start_fast_adv(void) {
-    fmna_adv_start_adv(BLE_ADV_MODE_FAST);
+void fmna_adv_platform_start_slow_adv(void)
+{
+    ble_adv_instance_t pair_adv_data = {0};
+
+    // Configure Advertising module params
+    pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+    pair_adv_data.adv_params.filter_policy   = BLE_GAP_ADV_FP_ANY;
+    pair_adv_data.adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
+
+    if (m_fmna_current_mode == FMNA_ADV_MODE_PIARING) {
+        pair_adv_data.adv_params.interval = fmna_pairing_adv_slow_intv;
+        pair_adv_data.adv_params.duration = fmna_pairing_adv_slow_duration;
+    } else if (m_fmna_current_mode == FMNA_ADV_MODE_NEARBY) {
+        pair_adv_data.adv_params.interval = fmna_nearby_adv_intv;
+        pair_adv_data.adv_params.duration = fmna_nearby_adv_duration;
+    } else if (m_fmna_current_mode == FMNA_ADV_MODE_SEPARATED) {
+        pair_adv_data.adv_params.interval = fmna_separated_adv_slow_intv;
+        pair_adv_data.adv_params.duration = fmna_separated_adv_slow_duration;
+    } else {
+        return;
+    }
+
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_ADV_PARAMS, &pair_adv_data.adv_params);
 }
 
-void fmna_adv_platform_start_slow_adv(void) {
-    fmna_adv_start_adv(BLE_ADV_MODE_SLOW);
+void fmna_adv_platform_stop_adv(void)
+{
+    // sd_ble_gap_adv_stop(m_advertising.adv_handle);
 }
 
-void fmna_adv_platform_stop_adv(void) {
-    sd_ble_gap_adv_stop(m_advertising.adv_handle);
-}
+void fmna_adv_platform_init_pairing(uint8_t *pairing_adv_service_data, size_t pairing_adv_service_data_size)
+{
+    uint8_t            off           = 0;
+    ble_adv_instance_t pair_adv_data = {0};
 
-void fmna_adv_platform_init_pairing(uint8_t *pairing_adv_service_data, size_t pairing_adv_service_data_size) {
     NRF_LOG_INFO("ADV Pairing");
-    
-    ret_code_t               ret_code;
-    ble_advertising_init_t   init;
-    ble_advdata_service_data_t service_data;
-    
-    memset(&init, 0, sizeof(init));
-    
-    service_data.service_uuid = FINDMY_UUID_SERVICE;
-    service_data.data.p_data = pairing_adv_service_data;
-    service_data.data.size = pairing_adv_service_data_size;
 
-    init.advdata.name_type               = BLE_ADVDATA_NO_NAME;
-    init.advdata.include_appearance      = false;
-    init.advdata.service_data_count      = 1;
-    init.advdata.p_service_data_array    = &service_data;
-    init.advdata.uuids_complete.uuid_cnt = sizeof(m_prox_adv_uuids) / sizeof(m_prox_adv_uuids[0]);
-    init.advdata.uuids_complete.p_uuids  = m_prox_adv_uuids;
-    
+    memset(m_fmna_adv, 0x00, sizeof(m_fmna_adv));
+
+    // config adv data
+    // complete list of 16-bit UUID
+    m_fmna_adv[off++]             = 3;
+    m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_16BIT_SERVICE_UUID_COMPLETE;
+    *(uint16_t *)&m_fmna_adv[off] = FINDMY_UUID_SERVICE;
+    off += 2;
+
+    // add service data
+    m_fmna_adv[off++]             = pairing_adv_service_data_size + 2 + 1;
+    m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_SERVICE_DATA;
+    *(uint16_t *)&m_fmna_adv[off] = FINDMY_UUID_SERVICE;
+    off += 2;
+    memcpy(&m_fmna_adv[off], pairing_adv_service_data, pairing_adv_service_data_size);
+    off += pairing_adv_service_data_size;
+
+    pair_adv_data.adv_data.adv_data.p_data = &m_fmna_adv[0];
+    pair_adv_data.adv_data.adv_data.len    = off;
+
     // Configure Advertising module params
-    init.config.ble_adv_directed_interval          = fmna_pairing_adv_fast_intv;
-    init.config.ble_adv_directed_timeout           = fmna_pairing_adv_fast_duration;
-    init.config.ble_adv_fast_enabled               = true;
-    init.config.ble_adv_fast_interval              = fmna_pairing_adv_fast_intv;
-    init.config.ble_adv_fast_timeout               = fmna_pairing_adv_fast_duration;
-    init.config.ble_adv_slow_enabled               = true;
-    init.config.ble_adv_slow_interval              = fmna_pairing_adv_slow_intv;
-    init.config.ble_adv_slow_timeout               = fmna_pairing_adv_slow_duration;
-    init.config.ble_adv_on_disconnect_disabled     = true;
-    
-    ret_code = ble_advertising_init(&m_advertising, &init);
-    APP_ERROR_CHECK(ret_code);
-    
-    ret_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, FMNA_ADV_TX_POWER_DBM);
-    APP_ERROR_CHECK(ret_code);
+    pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+    pair_adv_data.adv_params.interval        = fmna_pairing_adv_fast_intv;
+    pair_adv_data.adv_params.duration        = fmna_pairing_adv_fast_duration;
+    pair_adv_data.adv_params.filter_policy   = BLE_GAP_ADV_FP_ANY;
+    pair_adv_data.adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
 
-    ble_advertising_conn_cfg_tag_set(&m_advertising, FMNA_BLE_CONN_CFG_TAG);
+    m_fmna_current_mode = FMNA_ADV_MODE_PIARING;
+
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_ADV_TOTAL, &pair_adv_data);
 }
 
-void fmna_adv_platform_init_nearby(uint8_t *nearby_adv_manuf_data, size_t nearby_adv_manuf_data_size) {
-    ret_code_t               ret_code;
-    ble_advertising_init_t   init;
-    ble_advdata_manuf_data_t manuf_specific_data;
+void fmna_adv_platform_init_nearby(uint8_t *nearby_adv_manuf_data, size_t nearby_adv_manuf_data_size)
+{
+    uint8_t            off           = 0;
+    ble_adv_instance_t pair_adv_data = {0};
 
-    memset(&init, 0, sizeof(init));
+    NRF_LOG_INFO("ADV Nearby");
 
-    manuf_specific_data.company_identifier = FMNA_COMPANY_IDENTIFIER;
-    manuf_specific_data.data.p_data = nearby_adv_manuf_data;
-    manuf_specific_data.data.size = nearby_adv_manuf_data_size;
-   
-    init.advdata.name_type               = BLE_ADVDATA_NO_NAME;
-    init.advdata.include_appearance      = false;
-    init.advdata.p_manuf_specific_data   = &manuf_specific_data;
+    memset(m_fmna_adv, 0x00, sizeof(m_fmna_adv));
+
+    // config adv data
+    // menufacturer specific data
+    m_fmna_adv[off++]             = 3;
+    m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA;
+    *(uint16_t *)&m_fmna_adv[off] = FMNA_COMPANY_IDENTIFIER;
+    off += 2;
+    memcpy(&m_fmna_adv[off], nearby_adv_manuf_data, nearby_adv_manuf_data_size);
+    off += nearby_adv_manuf_data_size;
+
+    pair_adv_data.adv_data.adv_data.p_data = &m_fmna_adv[0];
+    pair_adv_data.adv_data.adv_data.len    = off;
 
     // Configure Advertising module params
-    init.config.ble_adv_directed_interval          = fmna_nearby_adv_fast_intv;
-    init.config.ble_adv_directed_timeout           = fmna_nearby_adv_fast_duration;
-    init.config.ble_adv_fast_enabled               = true;
-    init.config.ble_adv_fast_interval              = fmna_nearby_adv_fast_intv;
-    init.config.ble_adv_fast_timeout               = fmna_nearby_adv_fast_duration;
-    init.config.ble_adv_slow_enabled               = true;
-    init.config.ble_adv_slow_interval              = fmna_nearby_adv_intv;
-    init.config.ble_adv_slow_timeout               = fmna_nearby_adv_duration;
-    init.config.ble_adv_on_disconnect_disabled     = true;
-    
-    ret_code = ble_advertising_init(&m_advertising, &init);
-    APP_ERROR_CHECK(ret_code);
-    
-    ret_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, FMNA_ADV_TX_POWER_DBM);
-    APP_ERROR_CHECK(ret_code);
+    pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+    pair_adv_data.adv_params.interval        = fmna_nearby_adv_fast_intv;
+    pair_adv_data.adv_params.duration        = fmna_nearby_adv_fast_duration;
+    pair_adv_data.adv_params.filter_policy   = BLE_GAP_ADV_FP_ANY;
+    pair_adv_data.adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
 
-    ble_advertising_conn_cfg_tag_set(&m_advertising, FMNA_BLE_CONN_CFG_TAG);
+    m_fmna_current_mode = FMNA_ADV_MODE_NEARBY;
+
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_ADV_TOTAL, &pair_adv_data);
 }
 
+void fmna_adv_platform_init_separated(uint8_t *separated_adv_manuf_data, size_t separated_adv_manuf_data_size)
+{
+    uint8_t            off           = 0;
+    ble_adv_instance_t pair_adv_data = {0};
 
-void fmna_adv_platform_init_separated(uint8_t *separated_adv_manuf_data, size_t separated_adv_manuf_data_size) {
-    ret_code_t               ret_code;
-    ble_advertising_init_t   init;
-    ble_advdata_manuf_data_t manuf_specific_data;
-    
-    memset(&init, 0, sizeof(init));
+    NRF_LOG_INFO("ADV Sepatated");
 
-    manuf_specific_data.company_identifier = FMNA_COMPANY_IDENTIFIER;
-    manuf_specific_data.data.p_data = separated_adv_manuf_data;
-    manuf_specific_data.data.size = separated_adv_manuf_data_size;
-    
-    init.advdata.name_type               = BLE_ADVDATA_NO_NAME;
-    init.advdata.include_appearance      = false;
-    init.advdata.p_manuf_specific_data   = &manuf_specific_data;
-    
+    memset(m_fmna_adv, 0x00, sizeof(m_fmna_adv));
+
+    // config adv data
+    // menufacturer specific data
+    m_fmna_adv[off++]             = 3;
+    m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA;
+    *(uint16_t *)&m_fmna_adv[off] = FMNA_COMPANY_IDENTIFIER;
+    off += 2;
+    memcpy(&m_fmna_adv[off], separated_adv_manuf_data, separated_adv_manuf_data_size);
+    off += separated_adv_manuf_data_size;
+
     // Configure Advertising module params
-    init.config.ble_adv_directed_interval          = fmna_separated_adv_fast_intv;
-    init.config.ble_adv_directed_timeout           = fmna_separated_adv_fast_duration;
-    init.config.ble_adv_fast_enabled               = true;
-    init.config.ble_adv_fast_interval              = fmna_separated_adv_fast_intv;
-    init.config.ble_adv_fast_timeout               = fmna_separated_adv_fast_duration;
-    init.config.ble_adv_slow_enabled               = true;
-    init.config.ble_adv_slow_interval              = fmna_separated_adv_slow_intv;
-    init.config.ble_adv_slow_timeout               = fmna_separated_adv_slow_duration;
-    init.config.ble_adv_on_disconnect_disabled     = true;
-    
-    ret_code = ble_advertising_init(&m_advertising, &init);
-    APP_ERROR_CHECK(ret_code);
-    
-    ret_code = sd_ble_gap_tx_power_set(BLE_GAP_TX_POWER_ROLE_ADV, m_advertising.adv_handle, FMNA_ADV_TX_POWER_DBM);
-    APP_ERROR_CHECK(ret_code);
+    pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
+    pair_adv_data.adv_params.interval        = fmna_separated_adv_fast_intv;
+    pair_adv_data.adv_params.duration        = fmna_separated_adv_fast_duration;
+    pair_adv_data.adv_params.filter_policy   = BLE_GAP_ADV_FP_ANY;
+    pair_adv_data.adv_params.primary_phy     = BLE_GAP_PHY_AUTO;
 
-    ble_advertising_conn_cfg_tag_set(&m_advertising, FMNA_BLE_CONN_CFG_TAG);
+    m_fmna_current_mode = FMNA_ADV_MODE_SEPARATED;
+
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_ADV_TOTAL, &pair_adv_data);
 }

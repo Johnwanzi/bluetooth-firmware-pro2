@@ -39,5 +39,6 @@
 #include "nrf_ble_gatt.h"
 #include "boards.h"
 #include "nrf_log.h"
+#include "ok_ble.h"
 
 #endif /* fmna_platform_includes_h */

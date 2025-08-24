@@ -190,6 +190,7 @@ target_include_directories(
   ${FMNA_INC}
   ${NRF_SDK_INC}
   ${SDK_BUILD_ROOT}/app
+  ${SDK_BUILD_ROOT}/app/ble
   ${SDK_BUILD_ROOT}/components/heap
   ${SDK_BUILD_ROOT}/components/nvs
 )

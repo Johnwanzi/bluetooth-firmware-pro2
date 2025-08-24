@@ -9,7 +9,7 @@
 #ifndef fmna_config_h
 #define fmna_config_h
 
-#define DEBUG 1
+// #define DEBUG 1
 
 #define BLE_ADVERTISING_ENABLED 1
 #define PEER_MANAGER_ENABLED 1
@@ -20,7 +20,7 @@
 #define NRF_QUEUE_ENABLED 1
 #define NRF_SDH_BLE_GAP_DATA_LENGTH 251
 #define NRF_SDH_BLE_GATT_MAX_MTU_SIZE 247
-#define NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE 2400
+#define NRF_SDH_BLE_GATTS_ATTR_TAB_SIZE 3500
 #define NRF_STACK_GUARD_ENABLED 1
 #define APP_CONFIG_BLE_OBSERVER_PRIO 2
 #define FDS_ENABLED 1
@@ -37,5 +37,6 @@
 #define APP_TIMER_V2_RTC1_ENABLED 1
 #define APP_TIMER_SAFE_WINDOW_MS 10000
 #define BLE_TPS_ENABLED 1
+#define NRF_SDH_BLE_VS_UUID_COUNT 22
 
 #endif /* fmna_config_h */

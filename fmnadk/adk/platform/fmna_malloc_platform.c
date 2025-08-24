@@ -19,7 +19,7 @@ void fmna_malloc_platform_init(void) {
     sys_heap_init((void *)fmna_heap, (void *)(fmna_heap + FMNA_HEAP_SIZE));
 }
 void fmna_free(void *ptr) {
-    rt_free(ptr);
+    sys_free(ptr);
 }
 
 void * fmna_malloc(size_t size) {

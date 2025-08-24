@@ -160,16 +160,12 @@ static void fmna_separated_adv_manuf_data_init(uint8_t separated_pubkey[FMNA_PUB
 }
 
 void fmna_adv_init_pairing(void) {
-    fmna_adv_platform_stop_adv();
-    
     fmna_pairing_adv_service_data_init();
 
     fmna_adv_platform_init_pairing((uint8_t *)&m_fmna_pairing_adv_payload, sizeof(m_fmna_pairing_adv_payload));
 }
 
 void fmna_adv_init_separated(uint8_t separated_pubkey[FMNA_PUBKEY_BLEN], uint8_t hint) {
-    fmna_adv_platform_stop_adv();
-
     // Initialize separated manufacturing data with the separated public key and hint
     fmna_separated_adv_manuf_data_init(separated_pubkey, hint);
     
@@ -177,8 +173,6 @@ void fmna_adv_init_separated(uint8_t separated_pubkey[FMNA_PUBKEY_BLEN], uint8_t
 }
 
 void fmna_adv_init_nearby(uint8_t pubkey[FMNA_PUBKEY_BLEN]) {
-    fmna_adv_platform_stop_adv();
-
     // Initialize Nearby manufacturing data with the public key
     fmna_nearby_adv_manuf_data_init(pubkey);
     

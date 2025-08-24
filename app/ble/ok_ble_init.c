@@ -13,6 +13,7 @@
 #include "firmware_config.h"
 #include "ok_ble_internal.h"
 #include "ok_platform.h"
+#include "fmna_app.h"
 
 #define BLE_GAP_DATA_LENGTH_DEFAULT    27  //!< The stack's default data length.
 #define BLE_GAP_DATA_LENGTH_MAX        251 //!< Maximum data length.
@@ -241,6 +242,7 @@ static void services_init(void)
 
 static void advertising_init(void)
 {
+    ble_adv_manage_init();
     ok_ble_adv_init();
 }
 
@@ -331,4 +333,5 @@ void ok_ble_init(void)
     services_init();
     advertising_init();
     conn_params_init();
+    fmna_app_init();
 }

@@ -10,6 +10,12 @@
 #include "fmna_storage.h"
 #include "fmna_app.h"
 
+static void fmna_adv_init(void) 
+{
+    ble_adv_manage_register(BLE_MFI_ADV_E, NULL, false);
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_EVT_HANDLER, fmna_ble_peripheral_evt);
+}
+
 void fmna_app_init(void)
 {
     // platform init
@@ -17,6 +23,8 @@ void fmna_app_init(void)
     fmna_malloc_platform_init();
     fmna_storage_init();
     fmna_gatt_services_init();
+
+    fmna_adv_init();
 
     // app init
     fmna_connection_init();
