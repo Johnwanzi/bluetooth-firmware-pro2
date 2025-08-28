@@ -408,6 +408,16 @@ ret_code_t pm_register(pm_evt_handler_t event_handler)
     return NRF_SUCCESS;
 }
 
+ret_code_t pm_register_slot0(pm_evt_handler_t event_handler)
+{
+    VERIFY_MODULE_INITIALIZED();
+
+    m_evt_handlers[0] = event_handler;
+    m_n_registrants = m_n_registrants ? m_n_registrants : 1;
+
+    return NRF_SUCCESS;
+}
+
 
 ret_code_t pm_sec_params_set(ble_gap_sec_params_t * p_sec_params)
 {

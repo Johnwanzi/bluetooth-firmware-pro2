@@ -20,4 +20,6 @@ void fmna_pm_delete_bonds(void);
 /// Initializes Nordic Peer Manager module.
 void peer_manager_init(void);
 
+void peer_peer_manage_update(void);
+
 #endif /* fmna_peer_manager_h */

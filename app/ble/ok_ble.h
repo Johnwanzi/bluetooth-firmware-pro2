@@ -3,6 +3,7 @@
 
 #include "ble_gap.h"
 #include "ble.h"
+#include "peer_manager.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,7 +30,7 @@ enum {
 typedef struct {
     bool                 adv_alive;
     uint16_t             conn_handle;
-    uint8_t              mac[6];
+    ble_gap_addr_t       mac;
     ble_gap_adv_data_t   adv_data;
     ble_gap_adv_params_t adv_params;
     void (*ble_evt_handler)(ble_evt_t const *p_ble_evt);
@@ -72,6 +73,7 @@ void    ok_ble_adv_process(void);
 void    ok_ble_gap_local_disconnect(void);
 
 void ok_peer_manager_lesc_process(void);
+void ok_peer_manage_update(void);
 
 #ifdef __cplusplus
 }

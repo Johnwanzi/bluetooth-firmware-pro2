@@ -3,6 +3,7 @@
 #include "fmna_version.h"
 #include "fmna_malloc_platform.h"
 #include "fmna_gatt.h"
+#include "fmna_adv.h"
 #include "fmna_connection.h"
 #include "fmna_crypto.h"
 #include "fmna_motion_detection.h"
@@ -14,6 +15,7 @@ static void fmna_adv_init(void)
 {
     ble_adv_manage_register(BLE_MFI_ADV_E, NULL, false);
     ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_EVT_HANDLER, fmna_ble_peripheral_evt);
+    fmna_adv_reset_bd_addr();
 }
 
 void fmna_app_init(void)

@@ -17,6 +17,7 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+#include "peer_manager.h"
 #include "ok_ble.h"
 
 #define BLE_ADV_MANAGE_TIMEOUT_MS   APP_TIMER_TICKS(1500) // 1500ms
@@ -46,10 +47,12 @@ static void ble_adv_manage_start(uint8_t idx)
 
     NRF_LOG_INFO("Advertising instance %d started", idx);
 
-    if (memcmp(null_mac_addr, m_ble_adv_manage.adv[idx].mac, 6)) {
+    if (memcmp(null_mac_addr, m_ble_adv_manage.adv[idx].mac.addr, 6)) {
         // use provided mac address
         sd_ble_gap_addr_get(&gap_addr);
-        memcpy(gap_addr.addr, m_ble_adv_manage.adv[idx].mac, sizeof(gap_addr.addr));
+        memcpy(&gap_addr, &m_ble_adv_manage.adv[idx].mac, sizeof(gap_addr));
+        NRF_LOG_INFO("==>MAC: %02X:%02X:%02X:%02X:%02X:%02X", gap_addr.addr[5], gap_addr.addr[4], gap_addr.addr[3], gap_addr.addr[2],
+                     gap_addr.addr[1], gap_addr.addr[0]);
         sd_ble_gap_addr_set(&gap_addr);
     }
 
@@ -89,14 +92,18 @@ static void ble_adv_manage_timeout_handler(void *p_context)
     } else {
         adv_index = (adv_index + 1) % BLE_INSTANCE_NUM;
         // check if the next instance is alive and not connected
-        if (!m_ble_adv_manage.adv[adv_index].adv_alive || m_ble_adv_manage.adv[adv_index].conn_handle != BLE_CONN_HANDLE_INVALID) {
-            adv_index = (adv_index + 1) % BLE_INSTANCE_NUM;
+        for (int i = 0; i < BLE_INSTANCE_NUM; i++) {
+            adv_index = (adv_index + i) % BLE_INSTANCE_NUM;
+            if (!m_ble_adv_manage.adv[adv_index].adv_alive || m_ble_adv_manage.adv[adv_index].conn_handle != BLE_CONN_HANDLE_INVALID) {
+                continue;
+            }
+            break;
         }
     }
 
     // start the next advertising instance
-    if (m_ble_adv_manage.adv[adv_index].adv_alive && m_ble_adv_manage.adv[adv_index].conn_handle == BLE_CONN_HANDLE_INVALID
-        && m_ble_adv_manage.adv[adv_index].adv_data.adv_data.len > 0) {
+    if (m_ble_adv_manage.adv[adv_index].adv_alive && m_ble_adv_manage.adv[adv_index].conn_handle == BLE_CONN_HANDLE_INVALID &&
+        m_ble_adv_manage.adv[adv_index].adv_data.adv_data.len > 0) {
         ble_adv_manage_start(adv_index);
         m_ble_adv_manage.adv_is_running = true;
     }
@@ -129,7 +136,7 @@ void ble_adv_manage_register(uint8_t instance_id, ble_adv_instance_t *adv_config
         m_ble_adv_manage.adv[instance_id].adv_data        = adv_config->adv_data;
         m_ble_adv_manage.adv[instance_id].adv_params      = adv_config->adv_params;
         m_ble_adv_manage.adv[instance_id].ble_evt_handler = adv_config->ble_evt_handler;
-        memcpy(m_ble_adv_manage.adv[instance_id].mac, adv_config->mac, sizeof(m_ble_adv_manage.adv[instance_id].mac));
+        memcpy(&m_ble_adv_manage.adv[instance_id].mac, &(adv_config->mac), sizeof(m_ble_adv_manage.adv[instance_id].mac));
     }
 
     if (!m_ble_adv_manage.adv[instance_id].adv_alive) {
@@ -191,6 +198,8 @@ void ble_adv_manage_update(uint8_t instance_id, uint8_t data_type, void *data)
         } break;
 
         case BLE_MANAGE_UPDATE_MAC_ADDR: {
+            ble_gap_addr_t *mac_addr = (ble_gap_addr_t *)data;
+            memcpy(&m_ble_adv_manage.adv[instance_id].mac, mac_addr, sizeof(ble_gap_addr_t));
         } break;
 
         case BLE_MANAGE_UPDATE_EVT_HANDLER: {
@@ -219,7 +228,8 @@ void ble_adv_manage_event(ble_evt_t const *p_ble_evt)
         case BLE_GAP_EVT_CONNECTED: {
             for (uint8_t adv_index = 0; adv_index < BLE_INSTANCE_NUM; adv_index++) {
                 if (p_ble_evt->evt.gap_evt.params.connected.adv_data.adv_data.p_data == m_ble_adv_manage.adv[adv_index].adv_data.adv_data.p_data) {
-                    NRF_LOG_INFO("index %d Connected", adv_index);
+                    NRF_LOG_INFO("index %d Connected, conn_handle %d, adv_data %p", adv_index, p_ble_evt->evt.gap_evt.conn_handle,
+                                 p_ble_evt->evt.gap_evt.params.connected.adv_data.adv_data.p_data);
                     m_ble_adv_manage.adv[adv_index].conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
                     app_timer_stop(m_ble_adv_manage.adv_timer.adv_timer_id);
                     app_timer_start(m_ble_adv_manage.adv_timer.adv_timer_id, BLE_ADV_WAKEUP_IMMEDIATE_MS, NULL);
@@ -238,7 +248,7 @@ void ble_adv_manage_event(ble_evt_t const *p_ble_evt)
                         m_ble_adv_manage.adv[adv_index].ble_evt_handler(p_ble_evt);
                     }
 
-                    s_next_adv_index                            = adv_index;
+                    s_next_adv_index = adv_index;
                     app_timer_stop(m_ble_adv_manage.adv_timer.adv_timer_id);
                     app_timer_start(m_ble_adv_manage.adv_timer.adv_timer_id, BLE_ADV_WAKEUP_IMMEDIATE_MS, &s_next_adv_index);
                     break;

@@ -7,7 +7,7 @@ extern "C" {
 
 #include "ok_ble.h"
 
-#define APP_BLE_OBSERVER_PRIO 3 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+#define APP_BLE_OBSERVER_PRIO 1 /**< Application's BLE observer priority. You shouldn't need to modify this value. */
 #define APP_BLE_CONN_CFG_TAG  1 /**< A tag identifying the SoftDevice BLE configuration. */
 
 // service
@@ -17,6 +17,7 @@ void ok_trans_service_init(void);
 void ok_fido_service_init(void);
 
 void ok_ble_adv_init(void);
+void ok_ble_evt_handler(ble_evt_t const *p_ble_evt);
 
 void ok_peer_manager_init(void);
 bool ok_is_peer_manager_enable(void);
@@ -29,4 +30,4 @@ uint16_t ok_ble_conn_handle_get(void);
 }
 #endif
 
-#endif /* __OK_BLE_COMMON_H__ */
+#endif /* __OK_BLE_INTERNAL_H__ */

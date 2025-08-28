@@ -10,6 +10,7 @@
 #define fmna_config_h
 
 // #define DEBUG 1
+#define FMNA_NFC_ENABLE 0
 
 #define BLE_ADVERTISING_ENABLED 1
 #define PEER_MANAGER_ENABLED 1

@@ -107,6 +107,7 @@ ret_code_t pm_init(void);
  * @retval NRF_ERROR_INVALID_STATE  If the Peer Manager is not initialized.
  */
 ret_code_t pm_register(pm_evt_handler_t event_handler);
+ret_code_t pm_register_slot0(pm_evt_handler_t event_handler);
 
 
 /**@brief Function for providing pairing and bonding parameters to use for pairing procedures.

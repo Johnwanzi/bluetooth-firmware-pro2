@@ -504,12 +504,14 @@ uint32_t fmna_boot_evt_boot_handler(FMNA_SM_Event_t fmna_evt, void * p_context) 
         FMNA_LOG_INFO("Device is not FMNA Paired, going into pairing state.");
         
         // Unpair just in case, ensure that we are really unpaired before booting into Pairing state.
-        fmna_pm_delete_bonds();
+        // fmna_pm_delete_bonds();
         
         FMNA_LOG_INFO("Resetting BT Address");
         fmna_adv_reset_bd_addr();
-        
+
+        #if FMNA_NFC_ENABLE
         fmna_nfc_load_unpaired_url();
+        #endif
         
         // Go into Pairing state
         start_pair_adv();
@@ -531,9 +533,11 @@ uint32_t fmna_boot_evt_boot_handler(FMNA_SM_Event_t fmna_evt, void * p_context) 
     FMNA_LOG_HEXDUMP_INFO(m_fmna_current_primary_key.public_key, 4);
     
     fmna_connection_set_active_ltk(m_fmna_current_primary_key.ltk);
-    
+
+    #if FMNA_NFC_ENABLE
     fmna_nfc_load_paired_url();
-    
+    #endif
+
     fmna_adv_init_separated(m_fmna_current_secondary_key.public_key,
                            m_fmna_current_primary_key.public_key[FMNA_SEPARATED_ADV_PUBKEY_HINT_INDEX]);
     fmna_adv_start_slow_adv();
@@ -924,8 +928,10 @@ uint32_t fmna_fmna_pair_complete_evt_fmna_pairing_complete_handler(FMNA_SM_Event
 
     ret_code = app_timer_start(m_fmna_key_rotation_timer_id, MSEC_TO_TIMER_TICKS(m_fmna_key_rotation_timeout_ms), NULL);
     FMNA_ERROR_CHECK(ret_code);
-    
+
+    #if FMNA_NFC_ENABLE
     fmna_nfc_load_paired_url();
+    #endif
     
     return FMNA_SM_STATUS_SUCCESS;
 }

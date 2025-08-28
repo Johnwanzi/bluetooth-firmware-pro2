@@ -12,6 +12,7 @@
 #include "fmna_connection.h"
 #include "fmna_gatt_platform.h"
 #include "fmna_state_machine.h"
+#include "fmna_peer_manager.h"
 #include "security_dispatcher.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_fstorage.h"
@@ -109,6 +110,7 @@ void fmna_ble_peripheral_evt(ble_evt_t const * p_ble_evt) {
     
     switch (p_ble_evt->header.evt_id) {
         case BLE_GAP_EVT_CONNECTED:
+            peer_peer_manage_update();
             fmna_connection_connected_handler(p_gap_evt->conn_handle, p_gap_evt->params.connected.conn_params.min_conn_interval);
             break;
         

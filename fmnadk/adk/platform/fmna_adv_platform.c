@@ -17,6 +17,8 @@
 #define FMNA_ADV_MODE_NEARBY    1
 #define FMNA_ADV_MODE_SEPARATED 2
 
+uint8_t mac_xro_data[5] = {0xc2, 0x87, 0x04, 0xa9, 0x63};
+
 static uint8_t m_fmna_current_mode                       = 0;
 static uint8_t m_fmna_adv[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
 
@@ -31,7 +33,6 @@ void fmna_adv_platform_get_default_bt_addr(uint8_t default_bt_addr[FMNA_BLE_MAC_
 
 void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC_ADDR_BLEN])
 {
-    ret_code_t     ret_code;
     ble_gap_addr_t bd_addr;
 
     memcpy(bd_addr.addr, new_bt_mac, FMNA_BLE_MAC_ADDR_BLEN);
@@ -45,8 +46,7 @@ void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC
 
     bd_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
-    ret_code = sd_ble_gap_addr_set(&bd_addr);
-    APP_ERROR_CHECK(ret_code);
+    ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_MAC_ADDR, &bd_addr);
 }
 
 void fmna_adv_platform_start_fast_adv(void)

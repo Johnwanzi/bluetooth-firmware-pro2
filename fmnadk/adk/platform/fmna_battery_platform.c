@@ -13,9 +13,11 @@
 fmna_bat_state_level_t fmna_battery_platform_get_battery_level(void) {
     //TODO: Get actual battery level.
     fmna_bat_state_level_t bat_state_level = BAT_STATE_FULL;
-    
+
+    #if FMNA_NFC_ENABLE
     // Set the NFC URL battery status key.
     fmna_nfc_set_url_key(URL_KEY_BATT_STATUS, &bat_state_level);
+    #endif
     
     return bat_state_level;
 }

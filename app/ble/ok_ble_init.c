@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "ble.h"
 #include "ble_conn_params.h"
+#include "ble_conn_state.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
@@ -44,6 +45,13 @@ static char     ble_adv_name[ADV_NAME_LENGTH];
 
 static uint16_t m_ble_gatt_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;
 
+/// Function for checking whether a bluetooth stack event is an advertising timeout.
+/// @param p_ble_evt Bluetooth stack event.
+static bool ble_evt_is_advertising_timeout(ble_evt_t const * p_ble_evt) 
+{
+    return (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_SET_TERMINATED);
+}
+
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -51,73 +59,12 @@ static uint16_t m_ble_gatt_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - 3;
  */
 static void ble_evt_handler(const ble_evt_t *p_ble_evt, void *p_context)
 {
-    ret_code_t err_code;
-
-    switch (p_ble_evt->header.evt_id) {
-        case BLE_GAP_EVT_CONNECTED:
-            OK_LOG_INFO_NOFLUSH("Connected");
-            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
-            err_code      = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
-            APP_ERROR_CHECK(err_code);
-
-            nrf_ble_gatt_data_length_set(&m_gatt, m_conn_handle, BLE_GAP_DATA_LENGTH_MAX);
-            break;
-
-        case BLE_GAP_EVT_DISCONNECTED:
-            OK_LOG_INFO_NOFLUSH("Disconnected");
-            // LED indication will be changed when advertising starts.
-            m_conn_handle = BLE_CONN_HANDLE_INVALID;
-            break;
-
-        case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
-            OK_LOG_INFO_NOFLUSH("PHY update request.");
-            const ble_gap_phys_t phys = {
-                .rx_phys = BLE_GAP_PHY_AUTO,
-                .tx_phys = BLE_GAP_PHY_AUTO,
-            };
-            err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
-            APP_ERROR_CHECK(err_code);
-        } break;
-
-        case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-            // Pairing not supported
-            OK_LOG_INFO_NOFLUSH("Gap sec params request.");
-            if (!ok_is_peer_manager_enable()) {
-                err_code = sd_ble_gap_sec_params_reply(m_conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
-                APP_ERROR_CHECK(err_code);
-            }
-            break;
-
-        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-            // No system attributes have been stored.
-            OK_LOG_INFO_NOFLUSH("Gatt sys attr missing.");
-            err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
-            APP_ERROR_CHECK(err_code);
-            break;
-
-        case BLE_GATTC_EVT_TIMEOUT:
-            // Disconnect on GATT Client timeout event.
-            OK_LOG_INFO_NOFLUSH("Gattc evt timeout.");
-            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-            APP_ERROR_CHECK(err_code);
-            break;
-
-        case BLE_GATTS_EVT_TIMEOUT:
-            // Disconnect on GATT Server timeout event.
-            OK_LOG_INFO_NOFLUSH("Gatts evt timeout.");
-            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-            APP_ERROR_CHECK(err_code);
-            break;
-
-        default:
-            // No implementation needed.
-            OK_LOG_INFO_NOFLUSH("unhandle evt %d", p_ble_evt->header.evt_id);
-            break;
-    }
-
-    if (ok_is_peer_manager_enable()) {
-        pm_handler_secure_on_connection(p_ble_evt);
-        ok_peer_manager_ble_evt_handler(p_ble_evt);
+    uint16_t conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+    uint16_t role        = ble_conn_state_role(conn_handle);
+    
+    // based on the role this device plays in the connection, dispatch to the right handler
+    if (role == BLE_GAP_ROLE_PERIPH || ble_evt_is_advertising_timeout(p_ble_evt)) {
+        ble_adv_manage_event(p_ble_evt);
     }
 }
 
@@ -244,6 +191,11 @@ static void advertising_init(void)
 {
     ble_adv_manage_init();
     ok_ble_adv_init();
+
+    ble_gap_addr_t gap_addr = {0};
+    sd_ble_gap_addr_get(&gap_addr);
+    NRF_LOG_INFO("MAC: %02X:%02X:%02X:%02X:%02X:%02X", gap_addr.addr[5], gap_addr.addr[4], gap_addr.addr[3], gap_addr.addr[2], gap_addr.addr[1], gap_addr.addr[0]);
+    ble_adv_manage_update(BLE_ONEKEY_ADV_E, BLE_MANAGE_UPDATE_MAC_ADDR, &gap_addr);
 }
 
 /**@brief Function for handling the Connection Parameter events.
@@ -297,6 +249,80 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void ok_ble_evt_handler(ble_evt_t const *p_ble_evt)
+{
+    ret_code_t err_code;
+
+    switch (p_ble_evt->header.evt_id) {
+        case BLE_GAP_EVT_CONNECTED:
+            NRF_LOG_INFO("Connected");
+            m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            err_code      = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
+            APP_ERROR_CHECK(err_code);
+
+            nrf_ble_gatt_data_length_set(&m_gatt, m_conn_handle, BLE_GAP_DATA_LENGTH_MAX);
+
+            ok_peer_manage_update();
+            break;
+
+        case BLE_GAP_EVT_DISCONNECTED:
+            NRF_LOG_INFO("Disconnected");
+            // LED indication will be changed when advertising starts.
+            m_conn_handle = BLE_CONN_HANDLE_INVALID;
+            break;
+
+        case BLE_GAP_EVT_PHY_UPDATE_REQUEST: {
+            NRF_LOG_INFO("PHY update request.");
+            const ble_gap_phys_t phys = {
+                .rx_phys = BLE_GAP_PHY_AUTO,
+                .tx_phys = BLE_GAP_PHY_AUTO,
+            };
+            err_code = sd_ble_gap_phy_update(p_ble_evt->evt.gap_evt.conn_handle, &phys);
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+        case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
+            // Pairing not supported
+            NRF_LOG_INFO("Gap sec params request.");
+            if (!ok_is_peer_manager_enable()) {
+                err_code = sd_ble_gap_sec_params_reply(m_conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
+                APP_ERROR_CHECK(err_code);
+            }
+            break;
+
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING:
+            // No system attributes have been stored.
+            NRF_LOG_INFO("Gatt sys attr missing.");
+            err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GATTC_EVT_TIMEOUT:
+            // Disconnect on GATT Client timeout event.
+            NRF_LOG_INFO("Gattc evt timeout.");
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gattc_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        case BLE_GATTS_EVT_TIMEOUT:
+            // Disconnect on GATT Server timeout event.
+            NRF_LOG_INFO("Gatts evt timeout.");
+            err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+            APP_ERROR_CHECK(err_code);
+            break;
+
+        default:
+            // No implementation needed.
+            OK_LOG_INFO_NOFLUSH("unhandle evt %d", p_ble_evt->header.evt_id);
+            break;
+    }
+
+    if (ok_is_peer_manager_enable()) {
+        pm_handler_secure_on_connection(p_ble_evt);
+        ok_peer_manager_ble_evt_handler(p_ble_evt);
+    }
+}
+
 char *ok_ble_adv_name_get(void)
 {
     return &ble_adv_name[0];
@@ -333,5 +359,7 @@ void ok_ble_init(void)
     services_init();
     advertising_init();
     conn_params_init();
+
+    // fmna init
     fmna_app_init();
 }

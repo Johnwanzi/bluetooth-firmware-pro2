@@ -400,7 +400,7 @@ void fmna_connection_fmna_unpair(bool force_disconnect) {
     fmna_ret_code_t ret_code;
     
     // Delete the bonds
-    fmna_pm_delete_bonds();
+    // fmna_pm_delete_bonds();
     
     // reset address
     fmna_adv_reset_bd_addr();
@@ -425,7 +425,11 @@ void fmna_connection_fmna_unpair(bool force_disconnect) {
 
     // Other modules' unpair cleanup
     fmna_state_machine_clear_keys();
-    fmna_nfc_load_unpaired_url();
+
+    #if FMNA_NFC_ENABLE
+    fmna_nfc_load_unpaired_url()
+    #endif
+
     fmna_pairing_control_point_unpair();
     fmna_crypto_unpair();
     fmna_gatt_reset_queues();

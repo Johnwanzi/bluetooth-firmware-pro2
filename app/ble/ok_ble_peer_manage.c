@@ -59,19 +59,11 @@ static void send_service_changed(void *p_event_data, uint16_t event_size)
     APP_ERROR_CHECK(err_code);
 }
 
-/**@brief Function for handling Peer Manager events.
- *
- * @param[in] p_evt  Peer Manager event.
- */
-static void pm_evt_handler(const pm_evt_t *p_evt)
+static void ok_peer_manager_evt_handler(pm_evt_t const *p_evt)
 {
     ret_code_t err_code;
     uint8_t    data_len    = 0;
     uint8_t    bak_buff[2] = {0};
-
-    pm_handler_on_pm_evt(p_evt);
-    pm_handler_disconnect_on_sec_failure(p_evt);
-    pm_handler_flash_clean(p_evt);
 
     switch (p_evt->evt_id) {
 
@@ -141,6 +133,19 @@ static void pm_evt_handler(const pm_evt_t *p_evt)
     if (data_len > 0) {
         app_sched_event_put(bak_buff, data_len, ok_send_stm_data);
     }
+}
+
+/**@brief Function for handling Peer Manager events.
+ *
+ * @param[in] p_evt  Peer Manager event.
+ */
+static void pm_evt_handler(const pm_evt_t *p_evt)
+{
+    pm_handler_on_pm_evt(p_evt);
+    pm_handler_disconnect_on_sec_failure(p_evt);
+    pm_handler_flash_clean(p_evt);
+
+    ok_peer_manager_evt_handler(p_evt);
 }
 
 void ok_peer_manager_lesc_process(void)
@@ -261,7 +266,34 @@ void ok_peer_manager_init(void)
 
     err_code = pm_sec_params_set(&sec_param);
     APP_ERROR_CHECK(err_code);
-
+    
     err_code = pm_register(pm_evt_handler);
     APP_ERROR_CHECK(err_code);
+}
+
+void ok_peer_manage_update(void)
+{
+    ble_gap_sec_params_t sec_param;
+    ret_code_t           err_code;
+
+    memset(&sec_param, 0, sizeof(ble_gap_sec_params_t));
+
+    // Security parameters to be used for all security procedures.
+    sec_param.bond           = SEC_PARAM_BOND;
+    sec_param.mitm           = SEC_PARAM_MITM;
+    sec_param.lesc           = SEC_PARAM_LESC;
+    sec_param.keypress       = SEC_PARAM_KEYPRESS;
+    sec_param.io_caps        = SEC_PARAM_IO_CAPABILITIES;
+    sec_param.oob            = SEC_PARAM_OOB;
+    sec_param.min_key_size   = SEC_PARAM_MIN_KEY_SIZE;
+    sec_param.max_key_size   = SEC_PARAM_MAX_KEY_SIZE;
+    sec_param.kdist_own.enc  = 1;
+    sec_param.kdist_own.id   = 1;
+    sec_param.kdist_peer.enc = 1;
+    sec_param.kdist_peer.id  = 1;
+
+    err_code = pm_sec_params_set(&sec_param);
+    APP_ERROR_CHECK(err_code);
+
+    pm_register_slot0(pm_evt_handler);
 }
