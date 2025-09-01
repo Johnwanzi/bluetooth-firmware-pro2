@@ -46,8 +46,8 @@ static serial_number_payload_t m_serial_number_payload;
 static struct fm_crypto_ckg_context m_fm_crypto_ckg_ctx;
 
 static uint8_t m_seedk1[SK_BLEN];
-static uint8_t m_p[P_BLEN];
-static uint8_t m_server_shared_secret[SERVER_SHARED_SECRET_BLEN];
+__ALIGN(4) static uint8_t m_p[P_BLEN];
+__ALIGN(4) static uint8_t m_server_shared_secret[SERVER_SHARED_SECRET_BLEN];
 static uint64_t serial_number_query_count = 0;
 
 // Hardcoded values, eventually read these on boot from provisioned keys;
@@ -59,7 +59,7 @@ typedef struct {
     char m_software_auth_token[SOFTWARE_AUTH_TOKEN_BLEN];
 } __attribute__((aligned(SYS_POINTER_BSIZE), packed)) mfi_info_t;
 
-static mfi_info_t m_mfi_struct;
+__ALIGN(4) static mfi_info_t m_mfi_struct;
 
 typedef struct {
     uint8_t  session_nonce[SESSION_NONCE_BLEN];
@@ -101,8 +101,8 @@ e2_generation_encryption_msg_t decrypted_e2_generation_encryption_msg;
 
 static key_verif_encr_msg_t m_key_verif_encr_msg;
 
-static uint8_t m_current_primary_sk[SK_BLEN];
-static uint8_t m_current_secondary_sk[SK_BLEN];
+__ALIGN(4) static uint8_t m_current_primary_sk[SK_BLEN];
+__ALIGN(4) static uint8_t m_current_secondary_sk[SK_BLEN];
 
 #define FM_CRYPTO_STATUS_SUCCESS 0
 
@@ -234,6 +234,12 @@ static void fmna_crypto_keys_load(void) {
         len = ICLOUD_IDENTIFIER_BLEN;
         fmna_storage_read(FMNA_ICLOUD_ID, &m_fmna_finalize_pairing_data.icloud_id, len);
     }
+}
+
+static void fmna_update_sk_storage(void *p_event_data, uint16_t event_size) {
+    FMNA_LOG_INFO("Updating SK storage");
+    fmna_storage_write(FMNA_INITIAL_PRIMARY_SK, &m_current_primary_sk, SK_BLEN);
+    fmna_storage_write(FMNA_CURRENT_PRIMARY_SK, &m_fmna_current_primary_key, sizeof(m_fmna_current_primary_key));
 }
 
 void fmna_crypto_init(void) {
@@ -431,8 +437,7 @@ fmna_ret_code_t fmna_crypto_roll_primary_key(void) {
     FMNA_LOG_INFO("Curr LTK:");
     FMNA_LOG_HEXDUMP_INFO(m_fmna_current_primary_key.ltk, GAP_SEC_KEY_LEN);
     fmna_connection_set_active_ltk(m_fmna_current_primary_key.ltk);
-    fmna_storage_write(FMNA_INITIAL_PRIMARY_SK, &m_current_primary_sk, SK_BLEN);
-    fmna_storage_write(FMNA_CURRENT_PRIMARY_SK, &m_fmna_current_primary_key, sizeof(m_fmna_current_primary_key));
+    app_sched_event_put(NULL, NULL, fmna_update_sk_storage);
     
     fmna_malloc_dump();
     

@@ -193,10 +193,11 @@ void fmna_connection_platform_log_token_help(void * auth_token, uint16_t token_s
 #define MFI_TOKEN_MAX_LOG_CHUNK 64
 void fmna_connection_platform_log_token(void * auth_token, uint16_t token_size, uint8_t isCrash) {
     uint16_t token_remaining = token_size;
+    
+    NRF_LOG_INFO("MFi Token: %d bytes", token_remaining);
+#if 0
     void * p_temp = auth_token;
     uint16_t to_print;
-    
-    NRF_LOG_INFO("MFi Token:");
     while (token_remaining) {
         if (token_remaining > MFI_TOKEN_MAX_LOG_CHUNK) {
             to_print = MFI_TOKEN_MAX_LOG_CHUNK;
@@ -211,6 +212,7 @@ void fmna_connection_platform_log_token(void * auth_token, uint16_t token_size, 
             while (NRF_LOG_PROCESS()){}
         }
     }
+#endif
 }
 
 char num_to_char(uint8_t nibble) {

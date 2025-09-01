@@ -103,7 +103,6 @@ void fmna_pairing_control_point_handle_rx(void) {
             memcpy(&m_fmna_finalize_pairing_data,
                    &(((finalize_pairing_packet_t *)pairing_rx_buffer.data)->finalize_pairing_data),
                    sizeof(m_fmna_finalize_pairing_data));
-            fmna_storage_write(FMNA_ICLOUD_ID, &m_fmna_finalize_pairing_data.icloud_id, ICLOUD_IDENTIFIER_BLEN);
             fmna_state_machine_dispatch_event(FMNA_SM_EVENT_FMNA_PAIRING_FINALIZE);
             break;
             
@@ -117,3 +116,10 @@ void fmna_pairing_control_point_handle_rx(void) {
     
     memset(&pairing_rx_buffer, 0, sizeof(pairing_rx_buffer));
 }
+
+void fmna_pairing_control_icloud_id_store(void) {
+    __ALIGN(4) uint8_t _icloud_id[ICLOUD_IDENTIFIER_BLEN] = {0};
+    memcpy(_icloud_id, &m_fmna_finalize_pairing_data.icloud_id, ICLOUD_IDENTIFIER_BLEN);
+    fmna_storage_write(FMNA_ICLOUD_ID, _icloud_id, ICLOUD_IDENTIFIER_BLEN);
+}
+

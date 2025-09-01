@@ -24,7 +24,7 @@
 // set max connections response. 
 static bool m_fmna_delayed_max_conn = false;
 
-static bool m_is_fmna_paired = false;
+__ALIGN(4) static bool m_is_fmna_paired = false;
 
 fmna_active_conn_info_t m_fmna_active_connections[MAX_SUPPORTED_CONNECTIONS];
 
@@ -331,7 +331,7 @@ void fmna_connection_connected_handler(uint16_t conn_handle, uint16_t conn_inter
 }
 
 void fmna_connection_conn_param_update_handler(uint16_t conn_handle, uint16_t conn_interval) {
-    FMNA_LOG_INFO("Connection parameters updated, conn_handle 0x%x", conn_handle);
+    FMNA_LOG_INFO("Connection parameters updated, conn_handle 0x%x conn_interval %d", conn_handle, conn_interval);
     
     // Update the connection interval negotiated.
     m_fmna_active_connections[conn_handle].conn_intv = conn_interval;

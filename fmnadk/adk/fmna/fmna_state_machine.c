@@ -41,9 +41,9 @@ typedef enum {
     IS_NEARBY_TRUE,
 } is_nearby_t;
 
-fmna_primary_key_t m_fmna_current_primary_key = {0};
-fmna_primary_key_t m_fmna_current_separated_primary_key = {0};
-fmna_secondary_key_t m_fmna_current_secondary_key = {0};
+__ALIGN(4) fmna_primary_key_t m_fmna_current_primary_key = {0};
+__ALIGN(4) fmna_primary_key_t m_fmna_current_separated_primary_key = {0};
+__ALIGN(4) fmna_secondary_key_t m_fmna_current_secondary_key = {0};
 
 uint32_t m_current_separated_primary_key_index;
 
@@ -817,6 +817,10 @@ uint32_t fmna_unpaired_connecting_evt_fmna_pairing_initiate_handler(FMNA_SM_Even
 uint32_t fmna_fmna_pair_evt_fmna_pairing_finalize_handler(FMNA_SM_Event_t fmna_evt, void * p_context) {
     fmna_ret_code_t ret_code = FMNA_SUCCESS;
     uint32_t sm_ret = FMNA_SM_STATUS_SUCCESS;
+
+    // icloude_id storage
+    FMNA_LOG_INFO("-------> Storing iCloud ID");
+    fmna_pairing_control_icloud_id_store();
     
     ret_code = fmna_crypto_finalize_pairing();
     

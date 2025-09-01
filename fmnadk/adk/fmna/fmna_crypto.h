@@ -68,5 +68,6 @@ void fmna_crypto_unpair(void);
 
 void fmna_log_mfi_token_help(void);
 void fmna_log_mfi_token(void);
+void fmna_pairing_control_icloud_id_store(void);
 
 #endif /* fmna_crypto_h */
