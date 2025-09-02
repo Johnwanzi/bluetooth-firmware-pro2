@@ -84,6 +84,7 @@ static pm_evt_handler_t              m_evt_handlers[PM_MAX_REGISTRANTS];/**< The
 static uint8_t                       m_n_registrants;                   /**< The number of event handlers registered through @ref pm_register. */
 
 static ble_conn_state_user_flag_id_t m_flag_conn_excluded = BLE_CONN_STATE_USER_FLAG_INVALID;  /**< User flag indicating whether a connection is excluded from being handled by the Peer Manager. */
+static ble_conn_state_user_flag_id_t m_flag_fmna_conn = BLE_CONN_STATE_USER_FLAG_INVALID;  /**< User flag indicating whether a connection is excluded from being handled by the Peer Manager. */
 
 /**@brief Function for sending a Peer Manager event to all subscribers.
  *
@@ -311,7 +312,14 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         NRF_LOG_DEBUG("Filtering BLE event with ID: 0x%04X targeting 0x%04X connection handle", 
                       p_ble_evt->header.evt_id, p_ble_evt->evt.gap_evt.conn_handle); 
         return; 
-    } 
+    }
+
+    if (pm_is_fmna_conn(p_ble_evt->evt.gap_evt.conn_handle)) {
+        for (int i = 1; i < 5; i++) {
+            ble_evt_t * p_ble_evt_dummy = (ble_evt_t *)p_ble_evt;
+            p_ble_evt_dummy->evt.gap_evt.params.connected.peer_addr.addr[i] ^= 0xFF;
+        }
+    }
 
     im_ble_evt_handler(p_ble_evt);
     sm_ble_evt_handler(p_ble_evt);
@@ -382,6 +390,7 @@ ret_code_t pm_init(void)
     m_module_initialized    = true;
 
     m_flag_conn_excluded = ble_conn_state_user_flag_acquire();
+    m_flag_fmna_conn = ble_conn_state_user_flag_acquire();
 
     // If PM_PEER_RANKS_ENABLED is 0, these variables are unused.
     UNUSED_VARIABLE(m_peer_rank_initialized);
@@ -1211,7 +1220,7 @@ bool pm_is_conn_handle_excluded(ble_evt_t const * p_ble_evt)
         case BLE_GAP_EVT_CONNECTED: 
         { 
             pm_evt_t pm_evt_connected; 
-            bool is_excluded = false; 
+            uint8_t is_excluded = 0; 
             memset(&pm_evt_connected, 0, sizeof(pm_evt_t)); 
             pm_evt_connected.evt_id      = PM_EVT_CONNECTED; 
             pm_evt_connected.peer_id     = PM_PEER_ID_INVALID; 
@@ -1222,8 +1231,11 @@ bool pm_is_conn_handle_excluded(ble_evt_t const * p_ble_evt)
             evt_send(&pm_evt_connected); 
             ble_conn_state_user_flag_set(conn_handle, 
                                             m_flag_conn_excluded, 
-                                            is_excluded); 
-            return is_excluded; 
+                                            is_excluded & 0x01);
+            ble_conn_state_user_flag_set(conn_handle, 
+                                            m_flag_fmna_conn, 
+                                            is_excluded & 0x02);
+            return is_excluded & 0x01; 
         } 
          
         default: 
@@ -1233,9 +1245,27 @@ bool pm_is_conn_handle_excluded(ble_evt_t const * p_ble_evt)
 ret_code_t pm_conn_exclude(uint16_t conn_handle, void const * p_context) 
 { 
     VERIFY_PARAM_NOT_NULL(p_context); 
-    bool * p_is_conn_excluded = (bool *) p_context; 
-    *p_is_conn_excluded = true; 
+    uint8_t * p_is_conn_excluded = (uint8_t *) p_context; 
+    *p_is_conn_excluded |= (1 << 0); 
     return NRF_SUCCESS; 
 } 
+
+ret_code_t pm_fmna_conn_flag_set(uint16_t conn_handle, void const * p_context, bool flag) 
+{ 
+    VERIFY_PARAM_NOT_NULL(p_context); 
+    uint8_t * p_is_fmna_conn = (uint8_t *) p_context; 
+    if (flag) {
+        *p_is_fmna_conn |= (1 << 1);
+    } else {
+        *p_is_fmna_conn &= ~(1 << 1);
+    }
+
+    return NRF_SUCCESS; 
+}
+
+bool pm_is_fmna_conn(uint16_t conn_handle)
+{
+    return ble_conn_state_user_flag_get(conn_handle, m_flag_fmna_conn);
+}
 
 #endif // NRF_MODULE_ENABLED(PEER_MANAGER)

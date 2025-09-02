@@ -41,6 +41,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt) {
             
         case PM_EVT_CONNECTED:
             NRF_LOG_INFO("PM_EVT_CONNECTED");
+            pm_fmna_conn_flag_set(p_evt->conn_handle, p_evt->params.connected.p_context, true);
            
             /* Put the necessary conditions in the if statement below. FMN accessory should be in FMN paired state at this point */
             if (fmna_connection_is_fmna_paired())

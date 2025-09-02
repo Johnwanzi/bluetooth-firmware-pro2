@@ -67,6 +67,11 @@ static void ok_peer_manager_evt_handler(pm_evt_t const *p_evt)
 
     switch (p_evt->evt_id) {
 
+        case PM_EVT_CONNECTED:
+            NRF_LOG_INFO("OK---> PM_EVT_CONNECTED");
+            pm_fmna_conn_flag_set(p_evt->conn_handle, p_evt->params.connected.p_context, false);
+            break;
+
         case PM_EVT_BONDED_PEER_CONNECTED:
             OK_LOG_INFO_NOFLUSH("---> PM_EVT_BONDED_PEER_CONNECTED");
             request_service_changed = true;

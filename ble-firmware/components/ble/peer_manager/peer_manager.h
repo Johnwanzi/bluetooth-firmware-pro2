@@ -840,6 +840,8 @@ ret_code_t pm_peer_rank_highest(pm_peer_id_t peer_id);
  */ 
 ret_code_t pm_conn_exclude(uint16_t conn_handle, void const * p_context); 
 bool pm_is_conn_handle_excluded(ble_evt_t const * p_ble_evt);
+ret_code_t pm_fmna_conn_flag_set(uint16_t conn_handle, void const * p_context, bool flag);
+bool pm_is_fmna_conn(uint16_t conn_handle);
 
 
 /** @}*/
