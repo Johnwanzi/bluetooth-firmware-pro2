@@ -127,6 +127,7 @@ static void ok_peer_manager_evt_handler(pm_evt_t const *p_evt)
             break;
 
         default:
+            OK_LOG_INFO_NOFLUSH("ok----> pm evt_id %d", p_evt->evt_id);
             break;
     }
 

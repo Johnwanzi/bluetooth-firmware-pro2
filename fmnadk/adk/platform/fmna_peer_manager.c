@@ -68,9 +68,24 @@ static void pm_evt_handler(pm_evt_t const * p_evt) {
             NRF_LOG_ERROR("PM Conn security failed: conn_handle: 0x%x", p_evt->conn_handle);
             break;
 
+        case PM_EVT_CONN_SEC_CONFIG_REQ:
+            NRF_LOG_INFO("fmna----> PM_EVT_CONN_SEC_CONFIG_REQ");
+            pm_conn_sec_config_t conn_sec_config = {.allow_repairing = true};
+            pm_conn_sec_config_reply(p_evt->conn_handle, &conn_sec_config);
+            break;
+
         case PM_EVT_CONN_SEC_SUCCEEDED: {
-            NRF_LOG_INFO("PM Conn secured: conn_handle: 0x%x, procedure: 0x%x.", p_evt->conn_handle, p_evt->params.conn_sec_succeeded.procedure);
-            
+            NRF_LOG_INFO("fmna----> PM Conn secured: conn_handle: 0x%x, procedure: 0x%x.", p_evt->conn_handle, p_evt->params.conn_sec_succeeded.procedure);
+            pm_conn_sec_status_t conn_sec_status = {0};
+
+            // Check if the link is authenticated (meaning at least MITM).
+            pm_conn_sec_status_get(p_evt->conn_handle, &conn_sec_status);
+            NRF_LOG_INFO("fmna----> conn_sec_status: bonded: %d, encrypted: %d, mitm_protected: %d, lesc: %d",
+                         conn_sec_status.bonded,
+                         conn_sec_status.encrypted,
+                         conn_sec_status.mitm_protected,
+                         conn_sec_status.lesc);
+
             // mark as encrypted in the connection record
             fmna_connection_update_connection_info(p_evt->conn_handle, FMNA_MULTI_STATUS_ENCRYPTED, true);
             

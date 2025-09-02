@@ -311,6 +311,14 @@ void ok_ble_evt_handler(ble_evt_t const *p_ble_evt)
             APP_ERROR_CHECK(err_code);
             break;
 
+        case BLE_GAP_EVT_CONN_PARAM_UPDATE:
+            NRF_LOG_INFO("min %d, max %d, latency %d, timeout %d", 
+                         p_ble_evt->evt.gap_evt.params.connected.conn_params.min_conn_interval,
+                         p_ble_evt->evt.gap_evt.params.connected.conn_params.max_conn_interval,
+                         p_ble_evt->evt.gap_evt.params.connected.conn_params.slave_latency,
+                         p_ble_evt->evt.gap_evt.params.connected.conn_params.conn_sup_timeout);
+            break;
+
         default:
             // No implementation needed.
             OK_LOG_INFO_NOFLUSH("unhandle evt %d", p_ble_evt->header.evt_id);

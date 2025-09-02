@@ -22,6 +22,7 @@
 
 #define BLE_ADV_MANAGE_TIMEOUT_MS   APP_TIMER_TICKS(1500) // 1500ms
 #define BLE_ADV_WAKEUP_IMMEDIATE_MS APP_TIMER_TICKS(20)   // 20ms
+#define BLE_ADV_WAKEUP_LONG_MS      APP_TIMER_TICKS(5000) // 5000ms
 
 #ifdef FMNA_ADV_TX_POWER_DBM
 #define BLE_ADV_TX_POWER_DBM FMNA_ADV_TX_POWER_DBM
@@ -232,7 +233,7 @@ void ble_adv_manage_event(ble_evt_t const *p_ble_evt)
                                  p_ble_evt->evt.gap_evt.params.connected.adv_data.adv_data.p_data);
                     m_ble_adv_manage.adv[adv_index].conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
                     app_timer_stop(m_ble_adv_manage.adv_timer.adv_timer_id);
-                    app_timer_start(m_ble_adv_manage.adv_timer.adv_timer_id, BLE_ADV_WAKEUP_IMMEDIATE_MS, NULL);
+                    app_timer_start(m_ble_adv_manage.adv_timer.adv_timer_id, BLE_ADV_WAKEUP_LONG_MS, NULL);
                     break;
                 }
             }

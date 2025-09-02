@@ -21,6 +21,7 @@ uint8_t mac_xro_data[5] = {0xc2, 0x87, 0x04, 0xa9, 0x63};
 
 static uint8_t m_fmna_current_mode                       = 0;
 static uint8_t m_fmna_adv[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
+static uint8_t m_fmna_scan_rsp[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
 
 void fmna_adv_platform_get_default_bt_addr(uint8_t default_bt_addr[FMNA_BLE_MAC_ADDR_BLEN])
 {
@@ -34,7 +35,13 @@ void fmna_adv_platform_get_default_bt_addr(uint8_t default_bt_addr[FMNA_BLE_MAC_
 void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC_ADDR_BLEN])
 {
     ble_gap_addr_t bd_addr;
-
+    uint8_t default_bt_addr[FMNA_BLE_MAC_ADDR_BLEN];
+    
+    memcpy(default_bt_addr, (uint8_t *)NRF_FICR->DEVICEADDR, FMNA_BLE_MAC_ADDR_BLEN);
+    
+    // set address type bits for random static (0b11)
+    default_bt_addr[5] |= (uint8_t)FMNA_ADV_ADDR_TYPE_MASK;
+    
     memcpy(bd_addr.addr, new_bt_mac, FMNA_BLE_MAC_ADDR_BLEN);
 
     // Print the current public key 6 bytes Bluetooth Address
@@ -45,6 +52,12 @@ void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC
     reverse_array(bd_addr.addr, 0, FMNA_BLE_MAC_ADDR_BLEN - 1);
 
     bd_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
+
+    if (memcmp(bd_addr.addr, default_bt_addr, sizeof(bd_addr.addr)) == 0) {
+        for (int i = 0; i < 5; i++) {
+            bd_addr.addr[i] ^= mac_xro_data[i];
+        }
+    } 
 
     ble_adv_manage_update(BLE_MFI_ADV_E, BLE_MANAGE_UPDATE_MAC_ADDR, &bd_addr);
 }
@@ -104,6 +117,20 @@ void fmna_adv_platform_stop_adv(void)
     // sd_ble_gap_adv_stop(m_advertising.adv_handle);
 }
 
+static void fmna_adv_update_scan_rsp_data(ble_adv_instance_t *pair_adv_data)
+{
+    uint8_t off            = 0;
+    uint8_t tmp_len        = strlen(FMNA_ADV_NAME);
+
+    m_fmna_scan_rsp[off++] = tmp_len + 1;
+    m_fmna_scan_rsp[off++] = BLE_GAP_AD_TYPE_COMPLETE_LOCAL_NAME;
+    memcpy(&m_fmna_scan_rsp[off], FMNA_ADV_NAME, tmp_len);
+    off += tmp_len;
+
+    pair_adv_data->adv_data.scan_rsp_data.p_data = &m_fmna_scan_rsp[0];
+    pair_adv_data->adv_data.scan_rsp_data.len    = off;
+}
+
 void fmna_adv_platform_init_pairing(uint8_t *pairing_adv_service_data, size_t pairing_adv_service_data_size)
 {
     uint8_t            off           = 0;
@@ -112,6 +139,7 @@ void fmna_adv_platform_init_pairing(uint8_t *pairing_adv_service_data, size_t pa
     NRF_LOG_INFO("ADV Pairing");
 
     memset(m_fmna_adv, 0x00, sizeof(m_fmna_adv));
+    memset(m_fmna_scan_rsp, 0x00, sizeof(m_fmna_scan_rsp));
 
     // config adv data
     // complete list of 16-bit UUID
@@ -130,6 +158,8 @@ void fmna_adv_platform_init_pairing(uint8_t *pairing_adv_service_data, size_t pa
 
     pair_adv_data.adv_data.adv_data.p_data = &m_fmna_adv[0];
     pair_adv_data.adv_data.adv_data.len    = off;
+
+    fmna_adv_update_scan_rsp_data(&pair_adv_data);
 
     // Configure Advertising module params
     pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
@@ -154,7 +184,7 @@ void fmna_adv_platform_init_nearby(uint8_t *nearby_adv_manuf_data, size_t nearby
 
     // config adv data
     // menufacturer specific data
-    m_fmna_adv[off++]             = 3;
+    m_fmna_adv[off++]             = 3 + nearby_adv_manuf_data_size;
     m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA;
     *(uint16_t *)&m_fmna_adv[off] = FMNA_COMPANY_IDENTIFIER;
     off += 2;
@@ -163,6 +193,8 @@ void fmna_adv_platform_init_nearby(uint8_t *nearby_adv_manuf_data, size_t nearby
 
     pair_adv_data.adv_data.adv_data.p_data = &m_fmna_adv[0];
     pair_adv_data.adv_data.adv_data.len    = off;
+
+    fmna_adv_update_scan_rsp_data(&pair_adv_data);
 
     // Configure Advertising module params
     pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;
@@ -187,12 +219,17 @@ void fmna_adv_platform_init_separated(uint8_t *separated_adv_manuf_data, size_t 
 
     // config adv data
     // menufacturer specific data
-    m_fmna_adv[off++]             = 3;
+    m_fmna_adv[off++]             = 3 + separated_adv_manuf_data_size;
     m_fmna_adv[off++]             = BLE_GAP_AD_TYPE_MANUFACTURER_SPECIFIC_DATA;
     *(uint16_t *)&m_fmna_adv[off] = FMNA_COMPANY_IDENTIFIER;
     off += 2;
     memcpy(&m_fmna_adv[off], separated_adv_manuf_data, separated_adv_manuf_data_size);
     off += separated_adv_manuf_data_size;
+
+    pair_adv_data.adv_data.adv_data.p_data = &m_fmna_adv[0];
+    pair_adv_data.adv_data.adv_data.len    = off;
+
+    fmna_adv_update_scan_rsp_data(&pair_adv_data);
 
     // Configure Advertising module params
     pair_adv_data.adv_params.properties.type = BLE_GAP_ADV_TYPE_CONNECTABLE_SCANNABLE_UNDIRECTED;

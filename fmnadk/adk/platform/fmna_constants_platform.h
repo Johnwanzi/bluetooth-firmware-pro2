@@ -9,11 +9,12 @@
 #ifndef fmna_constants_platform_h
 #define fmna_constants_platform_h
 
-#define FMNA_MANUFACTURER_NAME                  "Acme"
-#define FMNA_MODEL_NAME                         "nRF52 DK PCA10040"
+#define FMNA_MANUFACTURER_NAME                  "Onekey"
+#define FMNA_MODEL_NAME                         "OneKey Pro 2"
 #define FMNA_PID                                0xCAFE
 #define FMNA_HARDWARE_VERSION                   "1"
 #define FMNA_HARDWARE_VERSION                   "1"
+#define FMNA_ADV_NAME                           "Test-FindMy"
 
 #define FMNA_LOG_ERROR(...)                     NRF_LOG_ERROR(__VA_ARGS__)
 #define FMNA_LOG_WARNING(...)                   NRF_LOG_WARNING( __VA_ARGS__)
