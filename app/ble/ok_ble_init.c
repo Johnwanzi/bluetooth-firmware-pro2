@@ -19,12 +19,12 @@
 #define BLE_GAP_DATA_LENGTH_DEFAULT    27  //!< The stack's default data length.
 #define BLE_GAP_DATA_LENGTH_MAX        251 //!< Maximum data length.
 
-#define MIN_CONN_INTERVAL              MSEC_TO_UNITS(20, UNIT_1_25_MS) /**< Minimum acceptable connection interval (10 ms). */
-#define MAX_CONN_INTERVAL              MSEC_TO_UNITS(40, UNIT_1_25_MS) /**< Maximum acceptable connection interval (100 ms) */
+#define MIN_CONN_INTERVAL              MSEC_TO_UNITS(15, UNIT_1_25_MS) /**< Minimum acceptable connection interval (10 ms). */
+#define MAX_CONN_INTERVAL              MSEC_TO_UNITS(2000, UNIT_1_25_MS) /**< Maximum acceptable connection interval (100 ms) */
 #define SLAVE_LATENCY                  0                               /**< Slave latency. */
-#define CONN_SUP_TIMEOUT               MSEC_TO_UNITS(3000, UNIT_10_MS) /**< Connection supervisory timeout (4 seconds). */
-#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(500)
-#define NEXT_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000)
+#define CONN_SUP_TIMEOUT               MSEC_TO_UNITS(5000, UNIT_10_MS) /**< Connection supervisory timeout (4 seconds). */
+#define FIRST_CONN_PARAMS_UPDATE_DELAY APP_TIMER_TICKS(5000)
+#define NEXT_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(30000)
 #define MAX_CONN_PARAM_UPDATE_COUNT    3
 
 #define ADV_NAME_LENGTH                12

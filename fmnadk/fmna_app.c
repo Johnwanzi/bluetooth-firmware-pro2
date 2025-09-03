@@ -6,6 +6,7 @@
 #include "fmna_adv.h"
 #include "fmna_connection.h"
 #include "fmna_crypto.h"
+#include "fmna_sound_platform.h"
 #include "fmna_motion_detection.h"
 #include "fmna_state_machine.h"
 #include "fmna_storage.h"
@@ -25,6 +26,7 @@ void fmna_app_init(void)
     fmna_malloc_platform_init();
     fmna_storage_init();
     fmna_gatt_services_init();
+    fmna_sound_platform_init();
 
     fmna_adv_init();
 
