@@ -17,8 +17,6 @@
 #define FMNA_ADV_MODE_NEARBY    1
 #define FMNA_ADV_MODE_SEPARATED 2
 
-uint8_t mac_xro_data[5] = {0xc2, 0x87, 0x04, 0xa9, 0x63};
-
 static uint8_t m_fmna_current_mode                       = 0;
 static uint8_t m_fmna_adv[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
 static uint8_t m_fmna_scan_rsp[BLE_GAP_ADV_SET_DATA_SIZE_MAX] = {0};
@@ -54,8 +52,8 @@ void fmna_adv_platform_set_random_static_bt_addr(uint8_t new_bt_mac[FMNA_BLE_MAC
     bd_addr.addr_type = BLE_GAP_ADDR_TYPE_RANDOM_STATIC;
 
     if (memcmp(bd_addr.addr, default_bt_addr, sizeof(bd_addr.addr)) == 0) {
-        for (int i = 0; i < 5; i++) {
-            bd_addr.addr[i] ^= mac_xro_data[i];
+        for (int i = 1; i < 5; i++) {
+            bd_addr.addr[i] ^= 0xFF;
         }
     } 
 
