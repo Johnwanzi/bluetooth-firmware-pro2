@@ -180,7 +180,7 @@ void ble_adv_manage_update(uint8_t instance_id, uint8_t data_type, void *data)
         return;
     }
 
-    if (m_ble_adv_manage.adv[instance_id].conn_handle == BLE_CONN_HANDLE_INVALID) {
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD && m_ble_adv_manage.adv[instance_id].conn_handle == BLE_CONN_HANDLE_INVALID) {
         app_timer_stop(m_ble_adv_manage.adv_timer.adv_timer_id);
     }
 
@@ -212,7 +212,7 @@ void ble_adv_manage_update(uint8_t instance_id, uint8_t data_type, void *data)
             break;
     }
 
-    if (m_ble_adv_manage.adv[instance_id].conn_handle == BLE_CONN_HANDLE_INVALID) {
+    if (current_int_priority_get() == APP_IRQ_PRIORITY_THREAD && m_ble_adv_manage.adv[instance_id].conn_handle == BLE_CONN_HANDLE_INVALID) {
         app_timer_start(m_ble_adv_manage.adv_timer.adv_timer_id, BLE_ADV_WAKEUP_IMMEDIATE_MS, NULL);
     }
 }
