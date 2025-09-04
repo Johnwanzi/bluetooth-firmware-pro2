@@ -321,7 +321,7 @@ uint32_t fmna_connection_get_non_owner_timeout(void) {
 }
 
 void fmna_connection_connected_handler(uint16_t conn_handle, uint16_t conn_interval) {
-    FMNA_LOG_INFO("Connected, conn_handle 0x%x", conn_handle);
+    FMNA_LOG_INFO("Connected, conn_handle 0x%x, conn_interval %d", conn_handle, conn_interval);
     
     // Initialize connection info for this new connection.
     init_connection_info(conn_handle, conn_interval);

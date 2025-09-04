@@ -116,7 +116,7 @@ void fmna_ble_peripheral_evt(ble_evt_t const * p_ble_evt) {
             break;
         
         case BLE_GAP_EVT_CONN_PARAM_UPDATE:
-            fmna_connection_conn_param_update_handler(p_gap_evt->conn_handle, p_gap_evt->params.connected.conn_params.min_conn_interval);
+            fmna_connection_conn_param_update_handler(p_gap_evt->conn_handle, p_gap_evt->params.conn_param_update.conn_params.min_conn_interval);
             break;
             
         case BLE_GAP_EVT_DISCONNECTED:
