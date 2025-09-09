@@ -1,0 +1,5 @@
+[submodule "fmnadk/adk"]
+	path = fmnadk/adk
+	url = https://github.com/OneKeyHQ/firmware-findmy.git
+	branch = main
+
