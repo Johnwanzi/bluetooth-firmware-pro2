@@ -9,7 +9,7 @@
             "gdbPath": "gdb-multiarch",
             "showDevDebugOutput": "raw",
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/artifacts/OnekeyProBTFW_BL",
+            "executable": "${workspaceFolder}/artifacts/OnekeyPro2BTFW_BL",
             // "loadFiles": [],
             "preAttachCommands": [
                 "mon speed 8000"
@@ -29,7 +29,7 @@
             "gdbPath": "gdb-multiarch",
             "showDevDebugOutput": "raw",
             "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}/artifacts/OnekeyProBTFW_APP",
+            "executable": "${workspaceFolder}/artifacts/OnekeyPro2BTFW_APP",
             // "loadFiles": [],
             "preAttachCommands": [
                 "mon speed 8000"

@@ -6,7 +6,7 @@ include("../toolchain.cmake")
 
 ###############################
 # Project
-project(OnekeyProBTFW_BL LANGUAGES C CXX ASM)
+project(OnekeyPro2BTFW_BL LANGUAGES C CXX ASM)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 message(STATUS "${CMAKE_PROJECT_NAME} Build Type: ${CMAKE_BUILD_TYPE}")

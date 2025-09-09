@@ -10,7 +10,7 @@
 #include "ok_platform.h"
 #include "ok_pwr_manage.h"
 #include "ok_ble.h"
-#include "ok_flashled.h"
+#include "flashled_manage.h"
 #include "ok_communication.h"
 
 #ifndef BUILD_ID

@@ -69,7 +69,7 @@ static int nvs_nrf52_erase(long offset, size_t size)
     uint32_t err_code = NRF_SUCCESS;
     uint32_t addr = nvs_data_fstorage.start_addr + offset;
 
-    if ((err_code = nrf_fstorage_erase(&nvs_data_fstorage, addr, size, NULL)) == NRF_SUCCESS) {    
+    if ((err_code = nrf_fstorage_erase(&nvs_data_fstorage, addr, size / NVS_NRF5_PAGE_SIZE, NULL)) == NRF_SUCCESS) {    
         while (nrf_fstorage_is_busy(&nvs_data_fstorage)) {
         }
     }

@@ -96,7 +96,7 @@
 #include "ok_ble.h"
 #include "ok_pwr_manage.h"
 #include "ok_communication.h"
-#include "ok_flashled.h"
+#include "flashled_manage.h"
 #include "ok_watch_dog.h"
 
 #define SCHED_MAX_EVENT_DATA_SIZE   256 //!< Maximum size of the scheduler event data.

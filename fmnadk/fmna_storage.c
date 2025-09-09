@@ -68,7 +68,7 @@ static int fmna_nvs_erase(long offset, size_t size)
     uint32_t err_code = NRF_SUCCESS;
     uint32_t addr     = fmna_nvs_fstorage.start_addr + offset;
 
-    if ((err_code = nrf_fstorage_erase(&fmna_nvs_fstorage, addr, size, NULL)) == NRF_SUCCESS) {
+    if ((err_code = nrf_fstorage_erase(&fmna_nvs_fstorage, addr, size / FMNA_NVS_PAGE_SIZE, NULL)) == NRF_SUCCESS) {
         while (nrf_fstorage_is_busy(&fmna_nvs_fstorage)) {
         }
     }

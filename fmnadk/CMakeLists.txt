@@ -13,7 +13,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 message(STATUS "${CMAKE_PROJECT_NAME} Build Type: ${CMAKE_BUILD_TYPE}")
 
 ###############################
-# fmna core source files
+# Source files
 set(
   FMNA_CORE_SRC
   ${PROJECT_SOURCE_DIR}/adk/fmna/fmna_adv.c
@@ -31,7 +31,6 @@ set(
   ${PROJECT_SOURCE_DIR}/adk/fmna/fmna_version.c
 )
 
-# Platform source files
 set(
   FMNA_PLATFORM_SRC
   ${PROJECT_SOURCE_DIR}/adk/platform/fmna_adv_platform.c
@@ -47,8 +46,6 @@ set(
   ${PROJECT_SOURCE_DIR}/adk/platform/fmna_sound_platform.c
 )
 
-# Crypto source files (conditional)
-# WolfSSL crypto source files
 set(
   WOLFSSL_SRC
   ${PROJECT_SOURCE_DIR}/adk/crypto/fmna-crypto-wrapper-reference/fm-crypto.c
@@ -74,14 +71,17 @@ set(
   ${PROJECT_SOURCE_DIR}/adk/crypto/wolfssl/wolfcrypt/src/port/nrf51.c
 )
 
-# App source files
 set(
   FMNA_APP_SRC
   ${PROJECT_SOURCE_DIR}/fmna_app.c
   ${PROJECT_SOURCE_DIR}/fmna_storage.c
 )
 
+###############################
 # Include directories
+set(SDK_BUILD_ROOT "${PROJECT_SOURCE_DIR}/../")
+set(NRF_SDK_ROOT "${PROJECT_SOURCE_DIR}/../ble-firmware")
+
 set(
   FMNA_INC
   ${PROJECT_SOURCE_DIR}/adk/fmna
@@ -90,10 +90,6 @@ set(
   ${PROJECT_SOURCE_DIR}/adk/crypto/wolfssl
   ${PROJECT_SOURCE_DIR}/adk/crypto/fmna-crypto-wrapper-reference
 )
-
-###############################
-# NRF SDK
-set(NRF_SDK_ROOT "${PROJECT_SOURCE_DIR}/../ble-firmware")
 
 set(
   NRF_SDK_INC
@@ -165,11 +161,7 @@ set(
 )
 
 ########################### Create FMNADK Static Library ###################
-# NRF SDK
-set(SDK_BUILD_ROOT "${PROJECT_SOURCE_DIR}/../")
-
 # Create Fmnadk Static Library
-
 add_library(
   fmnadk STATIC
   ${FMNA_CORE_SRC}

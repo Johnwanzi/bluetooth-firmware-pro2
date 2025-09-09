@@ -6,8 +6,6 @@ if(NOT DEFINED CMAKE_CONFIGURATION_TYPES OR "${CMAKE_BUILD_TYPE}" STREQUAL "")
   endif()
 endif()
 
-set(RTT_DEBUG_ENABLE 1)
-
 ###############################
 # Toolchain
 include("./toolchain.cmake")
@@ -23,9 +21,9 @@ set(DIR_UTILS "${PROJECT_SOURCE_DIR}/utils")
 set(DIR_NRFUTIL_REPO "${DIR_UTILS}/nrfutil_repo")
 set(FILE_KEY "${PROJECT_BINARY_DIR}/temp.pk")
 set(FILE_INPUT_BL_CONFIG "bl_config.hex")
-set(FILE_INPUT_MBR_UICR "${PROJECT_SOURCE_DIR}/artifacts/OnekeyProBTFW_MBR_UICR.hex")
-set(FILE_INPUT_BOOTLOADER "${PROJECT_SOURCE_DIR}/artifacts/OnekeyProBTFW_BL.hex")
-set(FILE_INPUT_APP "${PROJECT_SOURCE_DIR}/artifacts/OnekeyProBTFW_APP.hex")
+set(FILE_INPUT_MBR_UICR "${PROJECT_SOURCE_DIR}/artifacts/OnekeyPro2BTFW_MBR_UICR.hex")
+set(FILE_INPUT_BOOTLOADER "${PROJECT_SOURCE_DIR}/artifacts/OnekeyPro2BTFW_BL.hex")
+set(FILE_INPUT_APP "${PROJECT_SOURCE_DIR}/artifacts/OnekeyPro2BTFW_APP.hex")
 set(FILE_INPUT_SD "${PROJECT_SOURCE_DIR}/ble-firmware/components/softdevice/s132/hex/s132_nrf52_7.0.1_softdevice.hex")
 set(DIR_OUTPUT "${PROJECT_SOURCE_DIR}/artifacts_signed")
 set(FILE_OUTPUT_FACTORY_HEX "${DIR_OUTPUT}/factory.hex")
@@ -56,14 +54,6 @@ add_custom_target(
   COMMAND ${DIR_UTILS}/nrfutil_prepare.sh "${DIR_NRFUTIL_REPO}"
 )
 
-# python env (poetry)
-# set(PYTHON_RUNNER poetry -C ${DIR_UTILS} run)
-# add_custom_target(
-#   ${CMAKE_PROJECT_NAME}_PYENV
-#   COMMAND ${PYTHON_RUNNER} install
-#   COMMAND ${PYTHON_RUNNER} env info
-# )
-
 # python env (pip)
 set(PYTHON_RUNNER ${PROJECT_BINARY_DIR}/venv/bin/python)
 add_custom_target(
@@ -92,14 +82,14 @@ ExternalProject_Add(
 # dfu payload
 add_custom_target(
   ${CMAKE_PROJECT_NAME}_DFU_UPGRADE_PAYLOAD ALL
-  COMMAND ${PYTHON_RUNNER} ${DIR_UTILS}/bin2array.py -l 16 -i ${PROJECT_SOURCE_DIR}/artifacts/OnekeyProBTFW_BL.bin -o ${PROJECT_SOURCE_DIR}/artifacts/dfu_upgrade_payload.h
+  COMMAND ${PYTHON_RUNNER} ${DIR_UTILS}/bin2array.py -l 16 -i ${PROJECT_SOURCE_DIR}/artifacts/OnekeyPro2BTFW_BL.bin -o ${PROJECT_SOURCE_DIR}/artifacts/dfu_upgrade_payload.h
   DEPENDS dfu ${CMAKE_PROJECT_NAME}_PYENV
 )
 
 # mbr and uicr config
 add_custom_target(
   ${CMAKE_PROJECT_NAME}_MBR_UICR ALL
-  COMMAND ${PYTHON_RUNNER} ${DIR_UTILS}/uicr_mbr_hex_gen.py --no-use-uicr -i ${PROJECT_SOURCE_DIR}/artifacts/OnekeyProBTFW_BL -o ${FILE_INPUT_MBR_UICR}
+  COMMAND ${PYTHON_RUNNER} ${DIR_UTILS}/uicr_mbr_hex_gen.py --no-use-uicr -i ${PROJECT_SOURCE_DIR}/artifacts/OnekeyPro2BTFW_BL -o ${FILE_INPUT_MBR_UICR}
   DEPENDS dfu ${CMAKE_PROJECT_NAME}_PYENV
 )
 
@@ -169,11 +159,3 @@ add_custom_target(
   COMMAND JLINK_SN=$ENV{JLINK_SN} ${DIR_UTILS}/jlink_flash.sh ${FILE_OUTPUT_FACTORY_HEX}
   DEPENDS ${CMAKE_PROJECT_NAME}_FACTORY_HEX
 )
-
-###############################
-# Install
-# install(
-#   FILES 
-#   xxx.bin
-#   DESTINATION ${CMAKE_INSTALL_PREFIX}
-# )
