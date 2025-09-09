@@ -348,7 +348,7 @@ set(
 
 # RTT debug source and include directories. Used only when RTT_DEBUG_ENABLE is enabled.
 if(RTT_DEBUG_ENABLE)
-  message(STATUS "----------------->Enable RTT Debug")
+  message(STATUS "Enable RTT Debug")
 endif()
 
 set(
