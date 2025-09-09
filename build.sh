@@ -3,6 +3,8 @@
 # set -e
 
 ##### KEY #####
+export TOOL_CHAIN_PREFIX="arm-none-eabi"
+
 export BT_SIG_PK_FILE=$(pwd)/temp.pk
 echo "$BT_SIG_PK" > $BT_SIG_PK_FILE
 

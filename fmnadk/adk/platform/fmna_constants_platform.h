@@ -46,7 +46,7 @@
 #define MSEC_TO_TIMER_TICKS                     APP_TIMER_TICKS
 
 //MARK: Nordic SDK required macros.
-#define SEC_PARAM_BOND                          1                         /**< Perform bonding. */
+#define SEC_PARAM_BOND                          0                         /**< Perform bonding. */
 #define SEC_PARAM_MITM                          0                         /**< Man In The Middle protection not required. */
 #define SEC_PARAM_LESC                          0                         /**< LE Secure Connections not enabled. */
 #define SEC_PARAM_KEYPRESS                      0                         /**< Keypress notifications not enabled. */
